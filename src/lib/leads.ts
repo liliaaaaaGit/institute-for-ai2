@@ -22,14 +22,13 @@ export async function saveLead(
       email,
       consent_marketing: consentChecked,
       consent_policy_version: 'v1',
+      // session_id is filled by DB default
       meta: meta ?? null
-    }]); // return=minimal
-
-  if (error) {
+    }]); // return=minimal (no implicit SELECT)
     if ((error as any).code === '23505') {
       throw new Error('Bereits heute registriert – bitte E-Mail prüfen.');
     }
     throw error;
   }
-  return true; // success
+  return true;
 }

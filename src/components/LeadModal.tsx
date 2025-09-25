@@ -82,6 +82,8 @@ export default function LeadModal({ sessionId, onClose }: Props) {
         alert('Sie haben heute bereits einen Bericht angefordert.')
       } else if (msg.includes('row-level security')) {
         alert('Bitte stimmen Sie der Datenverarbeitung zu (Checkbox).')
+      } else if (msg.includes('Test mode') || msg.includes('verify a domain')) {
+        alert('Test-Modus aktiv: E-Mails werden nur an die Entwickler-Adresse gesendet.')
       } else if (msg.startsWith('EMAIL_FAIL_') || msg.includes('Email')) {
         alert('E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen.')
       } else {
