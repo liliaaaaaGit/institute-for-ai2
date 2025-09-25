@@ -8,6 +8,16 @@ if (!url || !key) {
 }
 const supabase = createClient(url, key);
 
+// TEMP DEBUG – remove after it works
+console.log(
+  '[SUPA ENV]',
+  {
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY_HEAD: import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 12),
+    VERCEL_ENV: import.meta.env.VERCEL_ENV
+  }
+);
+
 /** One row per email; safe upsert; no .select(); ignore duplicates */
 export async function upsertLead(
   email: string,
