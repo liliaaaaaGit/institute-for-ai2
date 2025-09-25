@@ -16,17 +16,15 @@ export async function saveLead(
   consentChecked: boolean,
   meta?: Record<string, any>
 ) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('leads')
-    .insert([{ email, consent_marketing: consentChecked, meta: meta ?? null }])
-    .select('id')
-    .single();
+    .insert([{ email, consent_marketing: consentChecked, meta: meta ?? null }]); // return=minimal
 
   if (error) {
     if ((error as any).code === '23505') {
-      throw new Error('Already registered today – please check your email.');
+      throw new Error('Bereits heute registriert – bitte E-Mail prüfen.');
     }
     throw error;
   }
-  return data?.id;
+  return true; // success
 }
