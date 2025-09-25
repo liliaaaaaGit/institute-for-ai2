@@ -52,8 +52,7 @@ export async function sendEmailReport(email: string, reportData: any): Promise<v
         body: JSON.stringify({
           to: email,
           subject,
-          html_report: html,
-          text_report: text,
+          html: html,
         }),
       })
       
