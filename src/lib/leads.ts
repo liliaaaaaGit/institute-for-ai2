@@ -45,35 +45,30 @@ export async function upsertLead(
  */
 export async function logLeadEvent(params: {
   email: string
-  sessionId?: string // may be non-UUID like "calc_..."
+  sessionId?: string
   model?: string
   tokens?: number
   co2_grams?: number
   public_slug?: string
   meta?: Record<string, any>
 }) {
-  const { email, sessionId, model, tokens, co2_grams, public_slug } = params
-  const baseMeta = params.meta ?? {}
-
-  // UUID v4 matcher (good enough for pre-insert validation)
-  const isUuid = (s?: string) =>
-    !!s &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
-
-  // Build payload; only include session_id if it’s a valid UUID
-  const payload: Record<string, any> = {
-    email: email.trim().toLowerCase(),
-    model,
-    tokens,
-    co2_grams,
-    public_slug,
-    meta: isUuid(sessionId) ? baseMeta : { ...baseMeta, session_key: sessionId },
+  const r = await fetch('/api/log-event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: params.email.trim().toLowerCase(),
+      // we don’t force UUID here; server can accept text/null
+      session_id: undefined, // omit; your DB column is uuid, keep it null unless you send a real uuid
+      model: params.model,
+      tokens: params.tokens,
+      co2_grams: params.co2_grams,
+      public_slug: params.public_slug,
+      meta: { ...(params.meta ?? {}), session_key: params.sessionId }, // store non-UUID session in meta
+    }),
+  })
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}))
+    throw new Error(j?.error || `logLeadEvent failed (${r.status})`)
   }
-  if (isUuid(sessionId)) {
-    payload.session_id = sessionId
-  }
-
-  const { error } = await supabase.from('lead_events').insert([payload])
-  if (error) throw error
   return true
 }
