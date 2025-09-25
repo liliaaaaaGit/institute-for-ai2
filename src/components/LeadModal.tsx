@@ -51,7 +51,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       const reportData: ReportData = JSON.parse(storedData)
       
-      // 1) Upsert lead (one row per email)
+      // ✅ just call the idempotent writer; let it throw only on real errors
       await upsertLead(email, consentRequired, {
         source: 'app',
         model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
@@ -59,7 +59,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
         co2Grams: reportData?.co2Grams
       })
 
-      // 2) Log this specific send event
+      // Log this specific send event
       await logLeadEvent({
         email,
         sessionId: reportData?.sessionId,
@@ -70,7 +70,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
         meta: reportData
       })
 
-      // 2) Build email HTML + send
+      // Build email HTML + send
       const subject = `Ihr CO₂-Bericht – ${
         typeof reportData?.model === 'string' ? reportData.model : (reportData?.model?.name ?? 'AI Model')
       }`
@@ -90,10 +90,8 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       const msg = String(e?.message || '')
       if (msg.includes('Test mode') || msg.includes('verify a domain')) {
         alert('Test-Modus aktiv: E-Mails werden nur an die Entwickler-Adresse gesendet.')
-      } else if (msg.startsWith('EMAIL_FAIL_') || msg.includes('Email')) {
+      } else if (msg.includes('Email')) {
         alert('E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen.')
-      } else if (msg.includes('row-level security')) {
-        alert('Bitte stimmen Sie der Datenverarbeitung zu (Checkbox).')
       } else {
         alert('Fehler beim Speichern oder E-Mail-Versand. Bitte versuchen Sie es erneut.')
       }

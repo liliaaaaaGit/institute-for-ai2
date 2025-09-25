@@ -12,43 +12,19 @@ export async function upsertLead(
   consentChecked: boolean,
   meta?: Record<string, any>
 ) {
-  // First try to update existing record
-  const { data: existingLead, error: selectError } = await supabase
+  // ✅ One-shot UPSERT; no SELECT; no .select() (we revoked SELECT on leads).
+  const normalized = email.trim().toLowerCase();
+  const { error } = await supabase
     .from('leads')
-    .select('id')
-    .eq('email', email)
-    .single();
-
-  if (selectError && selectError.code !== 'PGRST116') {
-    // PGRST116 = no rows returned, which is fine
-    throw selectError;
-  }
-
-  let error;
-  if (existingLead) {
-    // Update existing record
-    const { error: updateError } = await supabase
-      .from('leads')
-      .update({
+    .upsert(
+      {
+        email: normalized,
         consent_marketing: consentChecked,
         consent_policy_version: 'v1',
         meta: meta ?? null,
-      })
-      .eq('email', email);
-    error = updateError;
-  } else {
-    // Insert new record
-    const { error: insertError } = await supabase
-      .from('leads')
-      .insert([{
-        email,
-        consent_marketing: consentChecked,
-        consent_policy_version: 'v1',
-        meta: meta ?? null,
-      }]);
-    error = insertError;
-  }
-
+      },
+      { onConflict: 'email' }
+    ); // <- no .select()
   if (error) throw error;
   return true;
 }
@@ -69,7 +45,7 @@ export async function logLeadEvent(params: {
     .from('lead_events')
     .insert([
       {
-        email,
+        email: email.trim().toLowerCase(),
         session_id: sessionId || undefined, // DB default if omitted
         model,
         tokens,
