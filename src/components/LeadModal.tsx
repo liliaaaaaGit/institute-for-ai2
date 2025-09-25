@@ -3,10 +3,21 @@
 import { useState } from 'react'
 import { X, Mail, Shield, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { saveLead } from '../lib/leads'
 import { sendReport } from '../lib/emailService'
 import { co2EmailHtml } from '../emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
 import { t } from '../i18n'
+
+type ReportData = {
+  sessionId?: string;
+  publicSlug?: string;
+  co2Grams: number;
+  tokens?: number;
+  originalPrompt?: string;
+  model: { name: string } | string;
+  comparisons?: Array<{ label: string; value: string }>;
+};
 
 interface Props {
   sessionId: string
@@ -17,7 +28,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
   const [email, setEmail] = useState('')
   const [consentMarketing, setConsentMarketing] = useState(false)
   const [consentRequired, setConsentRequired] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [sending, setSending] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +36,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
     
     if (!consentRequired) return
     
-    setIsSubmitting(true)
+    setSending(true)
     
     try {
       // Get the stored report data
@@ -36,28 +47,39 @@ export default function LeadModal({ sessionId, onClose }: Props) {
         throw new Error('Report data not found')
       }
       
-      const reportData = JSON.parse(storedData)
-      console.log('Sending email report:', { email, reportData })
+      const reportData: ReportData = JSON.parse(storedData)
       
-      // Generate email content
-      const subject = `Ihr CO₂-Bericht – ${reportData?.model?.name ?? 'AI Model'}`;
+      const subject = `Ihr CO₂-Bericht – ${
+        typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name ?? 'AI Model'
+      }`;
+
+      // 1) Save lead to Supabase
+      const leadId = await saveLead(email, consentMarketing, {
+        source: 'co2-report',
+        sessionId: reportData?.sessionId,
+        publicSlug: reportData?.publicSlug,
+        tokens: reportData?.tokens,
+        model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
+        co2Grams: reportData?.co2Grams,
+      });
+
+      // 2) Build HTML and send email via Vercel API
       const html = co2EmailHtml({
         resultGrams: reportData.co2Grams,
-        model: reportData.model?.name ?? String(reportData.model),
+        model: typeof reportData.model === 'string' ? reportData.model : reportData.model.name,
         tokens: reportData.tokens,
         prompt: reportData.originalPrompt,
         comparisons: reportData.comparisons ?? [],
       });
       
-      // Send the email report
-      await sendReport(email, subject, html)
+      await sendReport(email, subject, html);
       
       navigate('/thanks')
     } catch (error) {
       console.error('Error:', error)
-      alert('E-Mail-Versand fehlgeschlagen. Bitte versuchen Sie es erneut.')
+      alert('Fehler beim Speichern oder E-Mail-Versand. Bitte versuchen Sie es erneut.')
     } finally {
-      setIsSubmitting(false)
+      setSending(false)
     }
   }
 
@@ -144,10 +166,10 @@ export default function LeadModal({ sessionId, onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={!email || !consentRequired || isSubmitting}
+              disabled={!email || !consentRequired || sending}
               className={`${buttonPrimary} flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isSubmitting ? (
+              {sending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                   {t('lead.sending')}
