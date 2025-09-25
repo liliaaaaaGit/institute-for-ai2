@@ -25,6 +25,7 @@ export async function saveLead(
       // session_id is filled by DB default
       meta: meta ?? null
     }]); // return=minimal (no implicit SELECT)
+  if (error) {
     if ((error as any).code === '23505') {
       throw new Error('Bereits heute registriert – bitte E-Mail prüfen.');
     }
