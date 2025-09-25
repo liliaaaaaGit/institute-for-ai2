@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { X, Mail, Shield, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { sendEmailReport } from '../lib/emailService'
+import { sendReport } from '../lib/emailService'
+import { co2EmailHtml } from '../emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
 import { t } from '../i18n'
 
@@ -38,8 +39,18 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       const reportData = JSON.parse(storedData)
       console.log('Sending email report:', { email, reportData })
       
+      // Generate email content
+      const subject = `Ihr CO₂-Bericht – ${reportData?.model?.name ?? 'AI Model'}`;
+      const html = co2EmailHtml({
+        resultGrams: reportData.co2Grams,
+        model: reportData.model?.name ?? String(reportData.model),
+        tokens: reportData.tokens,
+        prompt: reportData.originalPrompt,
+        comparisons: reportData.comparisons ?? [],
+      });
+      
       // Send the email report
-      await sendEmailReport(email, reportData)
+      await sendReport(email, subject, html)
       
       navigate('/thanks')
     } catch (error) {

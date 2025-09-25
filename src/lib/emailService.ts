@@ -1,74 +1,32 @@
-import { EmailReportData, generateEmailHTML, generateEmailText, generateEmailSubject } from './emailTemplates';
-import { buildComparisons } from './comparisons';
-
-export async function sendEmailReport(email: string, reportData: any): Promise<void> {
-  try {
-    // Get comparisons using the existing logic
-    const comparisons = buildComparisons(reportData.co2Grams);
-    
-    // Prepare email data
-    const emailData: EmailReportData = {
-      co2Grams: reportData.co2Grams,
-      tokens: reportData.tokens,
-      modelName: reportData.model.name,
-      provider: reportData.model.vendor,
-      originalPrompt: reportData.originalPrompt,
-      comparisons: {
-        pc: comparisons.find(c => c.key === 'pc')?.value || '',
-        car: comparisons.find(c => c.key === 'car')?.value || '',
-        household: comparisons.find(c => c.key === 'household')?.value || '',
-        phone: comparisons.find(c => c.key === 'phone')?.value || '',
-        led: comparisons.find(c => c.key === 'led')?.value || ''
-      },
-      sessionId: reportData.sessionId,
-      timestamp: reportData.timestamp
-    };
-
-    // Generate email content
-    const subject = generateEmailSubject(emailData);
-    const html = generateEmailHTML(emailData);
-    const text = generateEmailText(emailData);
-
-    // Check if we're in development mode
-    const isDevelopment = import.meta.env.DEV || !import.meta.env.PROD
-    
-    if (isDevelopment) {
-      // In development, just log the email content and simulate success
-      console.log('📧 Development Mode - Email would be sent to:', email)
-      console.log('📧 Subject:', subject)
-      console.log('📧 HTML length:', html.length, 'characters')
-      console.log('📧 Text length:', text.length, 'characters')
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return
-    }
-
-    // Try to send via API (production only)
-    try {
-      const response = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: email,
-          subject,
-          html: html,
-        }),
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        console.error('Email API failed:', errorText);
-        throw new Error(`Email API failed with status ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Email sending failed, but continuing:', error);
-      // In production, we'll just log the error and continue
-      // This prevents the app from breaking if email service is down
-    }
-
-  } catch (error) {
-    console.error('Email sending failed:', error);
-    throw error;
+// src/lib/emailService.ts
+export async function sendReport(to: string, subject: string, html: string, replyTo?: string) {
+  const res = await fetch('/api/send-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, html, replyTo }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error ?? `E-Mail failed (${res.status})`);
   }
+  return res.json() as Promise<{ ok: boolean; id: string | null }>;
+}
+
+// Legacy function for backward compatibility - will be removed after refactoring
+export async function sendEmailReport(email: string, reportData: any): Promise<void> {
+  console.warn('sendEmailReport is deprecated, use sendReport instead');
+  
+  // Import the template function
+  const { co2EmailHtml } = await import('../emails/Co2Report.html');
+  
+  const subject = `Ihr CO₂-Bericht – ${reportData?.model?.name ?? 'AI Model'}`;
+  const html = co2EmailHtml({
+    resultGrams: reportData.co2Grams,
+    model: reportData.model?.name ?? String(reportData.model),
+    tokens: reportData.tokens,
+    prompt: reportData.originalPrompt,
+    comparisons: reportData.comparisons ?? [],
+  });
+  
+  await sendReport(email, subject, html);
 }
