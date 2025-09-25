@@ -17,8 +17,13 @@ export async function saveLead(
   meta?: Record<string, any>
 ) {
   const { error } = await supabase
-    .from('leads')
-    .insert([{ email, consent_marketing: consentChecked, meta: meta ?? null }]); // return=minimal
++    .from('leads')
++    .insert([{
++      email,
++      consent_marketing: consentChecked,
++      consent_policy_version: 'v1',
++      meta: meta ?? null
++    }]); // return=minimal
 
   if (error) {
     if ((error as any).code === '23505') {
