@@ -13,18 +13,18 @@ export async function upsertLead(
   meta?: Record<string, any>
 ) {
   const normalized = email.trim().toLowerCase();
+  // ✅ Use UPSERT with ignoreDuplicates so conflicts do not 409 and no UPDATE happens.
   const { error } = await supabase
     .from('leads')
-    .insert(
+    .upsert(
       {
         email: normalized,
         consent_marketing: consentChecked,
         consent_policy_version: 'v1',
         meta: meta ?? null,
       },
-      // Only INSERT; if the email exists, ignore it silently.
       { onConflict: 'email', ignoreDuplicates: true }
-    );
+    ); // IMPORTANT: do NOT chain .select()
   if (error) throw error;
   return true;
 }
