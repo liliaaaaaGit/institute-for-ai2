@@ -10,6 +10,12 @@ export default function defineConfig() {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    define: {
+      // Ensure environment variables are available in production
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+      'import.meta.env.VITE_APP_URL': JSON.stringify(process.env.VITE_APP_URL),
+    },
     server: {
       proxy: {
         '/api': {
@@ -34,10 +40,6 @@ export default function defineConfig() {
           manualChunks: undefined,
         },
       },
-    },
-    define: {
-      // Ensure environment variables are available in production
-      'import.meta.env.PROD': JSON.stringify(process.env.NODE_ENV === 'production'),
     },
   }
 }

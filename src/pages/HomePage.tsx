@@ -24,6 +24,7 @@ export default function HomePage() {
   const [result, setResult] = useState<CalculationResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showLeadModal, setShowLeadModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadInitialData()
@@ -31,18 +32,11 @@ export default function HomePage() {
 
   async function loadInitialData() {
     try {
+      setError(null)
       // Check if Supabase client is available
       if (!supabase) {
         console.warn('Supabase not configured, using mock data')
-        setModels([
-          { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 12.0, is_active: true },
-          { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 10.0, is_active: true },
-          { id: '3', name: 'GPT-3.5', vendor: 'OpenAI', grams_per_1k_tokens: 7.0, is_active: true },
-          { id: '4', name: 'Claude Sonnet', vendor: 'Anthropic', grams_per_1k_tokens: 11.0, is_active: true },
-          { id: '5', name: 'Claude Haiku', vendor: 'Anthropic', grams_per_1k_tokens: 5.0, is_active: true },
-          { id: '6', name: 'Gemini 1.5 Pro', vendor: 'Google', grams_per_1k_tokens: 10.0, is_active: true },
-          { id: '7', name: 'Mistral 7B', vendor: 'Mistral AI', grams_per_1k_tokens: 4.0, is_active: true }
-        ])
+        setModels(getMockModels())
         return
       }
       
@@ -51,19 +45,24 @@ export default function HomePage() {
       console.log('Models loaded:', modelsRes.data)
       
       if (modelsRes.data) setModels(modelsRes.data)
+      else setModels(getMockModels())
     } catch (error) {
       console.error('Error loading data:', error)
-      // Fallback to mock data on error
-      setModels([
-        { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 12.0, is_active: true },
-        { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 10.0, is_active: true },
-        { id: '3', name: 'GPT-3.5', vendor: 'OpenAI', grams_per_1k_tokens: 7.0, is_active: true },
-        { id: '4', name: 'Claude Sonnet', vendor: 'Anthropic', grams_per_1k_tokens: 11.0, is_active: true },
-        { id: '5', name: 'Claude Haiku', vendor: 'Anthropic', grams_per_1k_tokens: 5.0, is_active: true },
-        { id: '6', name: 'Gemini 1.5 Pro', vendor: 'Google', grams_per_1k_tokens: 10.0, is_active: true },
-        { id: '7', name: 'Mistral 7B', vendor: 'Mistral AI', grams_per_1k_tokens: 4.0, is_active: true }
-      ])
+      setError(`Failed to load models: ${error}`)
+      setModels(getMockModels())
     }
+  }
+
+  function getMockModels(): AIModel[] {
+    return [
+      { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 12.0, is_active: true },
+      { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 10.0, is_active: true },
+      { id: '3', name: 'GPT-3.5', vendor: 'OpenAI', grams_per_1k_tokens: 7.0, is_active: true },
+      { id: '4', name: 'Claude Sonnet', vendor: 'Anthropic', grams_per_1k_tokens: 11.0, is_active: true },
+      { id: '5', name: 'Claude Haiku', vendor: 'Anthropic', grams_per_1k_tokens: 5.0, is_active: true },
+      { id: '6', name: 'Gemini 1.5 Pro', vendor: 'Google', grams_per_1k_tokens: 10.0, is_active: true },
+      { id: '7', name: 'Mistral 7B', vendor: 'Mistral AI', grams_per_1k_tokens: 4.0, is_active: true }
+    ]
   }
 
   async function handleCalculation(data: {
@@ -159,6 +158,10 @@ export default function HomePage() {
                 src="/Key Visual copy.jpg" 
                 alt="AI Logo" 
                 className="h-8 w-auto"
+                onError={(e) => {
+                  console.warn('Logo failed to load:', e)
+                  e.currentTarget.style.display = 'none'
+                }}
               />
             </div>
           </div>
@@ -166,6 +169,15 @@ export default function HomePage() {
       </div>
 
       <div className={`${container} ${section}`}>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+            <p className="text-red-800 text-sm">
+              <strong>Debug Info:</strong> {error}
+            </p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className={`${h2} mb-4`}>
