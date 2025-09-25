@@ -7,7 +7,7 @@ import ResultCard from '../components/ResultCard'
 import LeadModal from '../components/LeadModal'
 import { AIModel, ComparisonFactor } from '../types'
 import { buildComparisons } from '../lib/comparisons'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabase'
 import { h1, h2, body, bodyLarge, container, section, card } from '../components/Ui'
 import { t, formatNumber } from '../i18n'
 

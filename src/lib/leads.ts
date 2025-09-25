@@ -1,16 +1,5 @@
 // src/lib/leads.ts
-import { createClient } from '@supabase/supabase-js';
-
-const url = import.meta.env.VITE_SUPABASE_URL!;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY!;
-
-// Harte Guards – ohne diese zwei Variablen funktioniert der Client nicht
-if (!url || !key) {
-  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
-}
-
-// Browser-Client
-const supabase = createClient(url, key); // keep for reads if needed
+import { supabase } from './supabase';
 
 // TEMP DEBUG – nach erfolgreichem Test wieder entfernen
 console.log('[SUPA ENV]', {

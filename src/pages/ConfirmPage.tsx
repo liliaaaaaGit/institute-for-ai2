@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { CheckCircle, Download, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabase'
 import { h1, h2, body, container, section, card, buttonPrimary } from '../components/Ui'
 import { t } from '../i18n'
 
