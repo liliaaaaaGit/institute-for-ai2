@@ -42,27 +42,31 @@ export async function upsertLead(
  */
 export async function logLeadEvent(params: {
   email: string;
-  sessionId?: string;
+  sessionId?: string;   // may be non-UUID like "calc_..."
   model?: string;
   tokens?: number;
   co2_grams?: number;
   public_slug?: string;
   meta?: Record<string, any>;
 }) {
-  const { email, sessionId, model, tokens, co2_grams, public_slug, meta } = params;
+  const { email, sessionId, model, tokens, co2_grams, public_slug } = params;
+  const baseMeta = params.meta ?? {};
 
-  const { error } = await supabase.from('lead_events').insert([
-    {
-      email: email.trim().toLowerCase(),
-      session_id: sessionId || undefined,
-      model,
-      tokens,
-      co2_grams,
-      public_slug,
-      meta: meta ?? null,
-    },
-  ]);
+  // UUID v4-ish matcher (good enough for validation before insert)
+  const isUuid = (s?: string) =>
+    !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
 
+  // Only send session_id if it's a UUID; otherwise put it into meta.session_key
+  const payload: any = {
+    email: email.trim().toLowerCase(),
+    model,
+    tokens,
+    co2_grams,
+    public_slug,
+    meta: isUuid(sessionId) ? baseMeta : { ...baseMeta, session_key: sessionId },
+  };
+  if (isUuid(sessionId)) payload.session_id = sessionId;
+
+  const { error } = await supabase.from('lead_events').insert([payload]);
   if (error) throw error;
   return true;
-}
