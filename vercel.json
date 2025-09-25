@@ -1,5 +1,7 @@
 {
   "functions": {
-    "api/send-report.ts": { "runtime": "vercel/node" }
+    "api/send-report.ts": {
+      "runtime": "nodejs18.x"
+    }
   }
 }
