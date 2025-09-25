@@ -70,3 +70,4 @@ export async function logLeadEvent(params: {
   const { error } = await supabase.from('lead_events').insert([payload]);
   if (error) throw error;
   return true;
+}
