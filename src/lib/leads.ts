@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Use the same client instance from supabaseClient.ts
+import { supabase as supabaseClient } from './supabaseClient';
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL!,
   import.meta.env.VITE_SUPABASE_ANON_KEY!
 );
 
 /**
- * Save a lead into the Supabase "leads" table.
+  if (!supabaseClient) {
+    throw new Error('Supabase not configured - cannot save lead');
+  }
+  
+  const { error } = await supabaseClient.from('leads').insert([{
  * - `email`: user's email address
  * - `consentChecked`: true if the user gave marketing consent (checkbox)
  * - `meta`: optional JSON metadata (sessionId, source, etc.)

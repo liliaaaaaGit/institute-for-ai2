@@ -31,11 +31,9 @@ export default function HomePage() {
 
   async function loadInitialData() {
     try {
-      // Check if Supabase is properly configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL
-      if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+      // Check if Supabase client is available
+      if (!supabase) {
         console.warn('Supabase not configured, using mock data')
-        // Use mock data when Supabase is not available
         setModels([
           { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 12.0, is_active: true },
           { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 10.0, is_active: true },
