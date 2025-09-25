@@ -12,17 +12,42 @@ export async function upsertLead(
   consentChecked: boolean,
   meta?: Record<string, any>
 ) {
-  const { error } = await supabase
+  // First try to update existing record
+  const { data: existingLead, error: selectError } = await supabase
     .from('leads')
-    .upsert(
-      {
+    .select('id')
+    .eq('email', email)
+    .single();
+
+  if (selectError && selectError.code !== 'PGRST116') {
+    // PGRST116 = no rows returned, which is fine
+    throw selectError;
+  }
+
+  let error;
+  if (existingLead) {
+    // Update existing record
+    const { error: updateError } = await supabase
+      .from('leads')
+      .update({
+        consent_marketing: consentChecked,
+        consent_policy_version: 'v1',
+        meta: meta ?? null,
+      })
+      .eq('email', email);
+    error = updateError;
+  } else {
+    // Insert new record
+    const { error: insertError } = await supabase
+      .from('leads')
+      .insert([{
         email,
         consent_marketing: consentChecked,
         consent_policy_version: 'v1',
         meta: meta ?? null,
-      },
-      { onConflict: 'email' } // <- per-email uniqueness
-    );
+      }]);
+    error = insertError;
+  }
 
   if (error) throw error;
   return true;
