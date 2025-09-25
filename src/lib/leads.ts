@@ -10,7 +10,7 @@ if (!url || !key) {
 }
 
 // Browser-Client
-const supabase = createClient(url, key);
+const supabase = createClient(url, key); // keep for reads if needed
 
 // TEMP DEBUG – nach erfolgreichem Test wieder entfernen
 console.log('[SUPA ENV]', {
@@ -31,29 +31,21 @@ export async function upsertLead(
   consentChecked: boolean,
   meta?: Record<string, any>
 ) {
-  const normalized = email.trim().toLowerCase();
-
-  try {
-    const { error } = await supabase
-      .from('leads')
-      .upsert(
-        {
-          email: normalized,
-          consent_marketing: consentChecked,      // RLS verlangt true
-          consent_policy_version: 'v1',
-          meta: meta ?? null,
-        },
-        { onConflict: 'email', ignoreDuplicates: true }
-      ); // WICHTIG: kein .select()
-
-    if (error) throw error;
-    return true;
-  } catch (e: any) {
-    const msg = String(e?.message || '');
-    // doppelte Keys/409 sind hier ok (idempotent)
-    if (e?.code === '23505' || /duplicate|unique|409/i.test(msg)) return true;
-    throw e;
+  const r = await fetch('/api/leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email.trim().toLowerCase(),
+      consent_marketing: !!consentChecked,
+      consent_policy_version: 'v1',
+      meta: meta ?? null,
+    }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j?.error || `Lead upsert failed (${r.status})`);
   }
+  return true;
 }
 
 /**
