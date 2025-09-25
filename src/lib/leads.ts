@@ -6,23 +6,24 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY!
 );
 
+// ✅ One-write lead save: INSERT with onConflict + ignoreDuplicates (no SELECT, no UPDATE)
 export async function upsertLead(
   email: string,
   consentChecked: boolean,
   meta?: Record<string, any>
 ) {
   const normalized = email.trim().toLowerCase();
-  // ✅ One-shot UPSERT. No pre-SELECT. No .select() (RLS blocks SELECT).
   const { error } = await supabase
     .from('leads')
-    .upsert(
+    .insert(
       {
         email: normalized,
         consent_marketing: consentChecked,
         consent_policy_version: 'v1',
         meta: meta ?? null,
       },
-      { onConflict: 'email' }
+      // Only INSERT; if the email exists, ignore it silently.
+      { onConflict: 'email', ignoreDuplicates: true }
     );
   if (error) throw error;
   return true;
