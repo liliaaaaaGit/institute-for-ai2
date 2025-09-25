@@ -17,8 +17,8 @@ export async function saveLead(
   meta?: Record<string, any>
 ) {
   const { error } = await supabase
-+    .from('leads')
-+    .insert([{
+    from('leads')
+ insert([{
 +      email,
 +      consent_marketing: consentChecked,
 +      consent_policy_version: 'v1',
