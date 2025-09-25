@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/send-report.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "env": {
+    "RESEND_API_KEY": "@resend_api_key",
+    "FROM_EMAIL": "@from_email",
+    "REPLY_TO": "@reply_to"
+  }
+}
