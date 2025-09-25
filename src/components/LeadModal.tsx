@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { X, Mail, Shield, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { saveLead } from '@/lib/leads'
+import { upsertLead, logLeadEvent } from '@/lib/leads'
 import { sendReport } from '@/lib/emailService'
 import { co2EmailHtml } from '@/emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
@@ -51,13 +51,23 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       const reportData: ReportData = JSON.parse(storedData)
       
-      // 1) Save lead (RLS requires consent_marketing=true)
-      await saveLead(email, consentRequired, {
-        source: 'co2-report',
-        sessionId: reportData?.sessionId,
-        tokens: reportData?.tokens,
+      // 1) Upsert lead (one row per email)
+      await upsertLead(email, consentRequired, {
+        source: 'app',
         model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
-        co2Grams: reportData?.co2Grams,
+        tokens: reportData?.tokens,
+        co2Grams: reportData?.co2Grams
+      })
+
+      // 2) Log this specific send event
+      await logLeadEvent({
+        email,
+        sessionId: reportData?.sessionId,
+        model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
+        tokens: reportData?.tokens,
+        co2_grams: reportData?.co2Grams,
+        public_slug: reportData?.publicSlug,
+        meta: reportData
       })
 
       // 2) Build email HTML + send
@@ -78,9 +88,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       navigate('/thanks')
     } catch (e: any) {
       const msg = String(e?.message || '')
-      if (msg.includes('DUPLICATE_DAY') || msg.includes('23505')) {
-        alert('Sie haben heute bereits einen Bericht angefordert.')
-      } else if (msg.includes('row-level security')) {
+      if (msg.includes('row-level security')) {
         alert('Bitte stimmen Sie der Datenverarbeitung zu (Checkbox).')
       } else if (msg.includes('Test mode') || msg.includes('verify a domain')) {
         alert('Test-Modus aktiv: E-Mails werden nur an die Entwickler-Adresse gesendet.')
