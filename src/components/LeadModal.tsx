@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { X, Mail, Shield, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { saveLead } from '../lib/leads'
-import { sendReport } from '../lib/emailService'
-import { co2EmailHtml } from '../emails/Co2Report.html'
+import { saveLead } from '@/lib/leads'
+import { sendReport } from '@/lib/emailService'
+import { co2EmailHtml } from '@/emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
 import { t } from '../i18n'
 
@@ -34,12 +34,14 @@ export default function LeadModal({ sessionId, onClose }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!consentRequired) return
+    if (!email || !consentRequired) return
     
     setSending(true)
     
     try {
-      // Get the stored report data
+      console.debug('Submit lead', { email, consentRequired })
+      
+      // Get stored report data
       const storageKey = `report_${sessionId}`
       const storedData = localStorage.getItem(storageKey)
       
@@ -49,35 +51,44 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       const reportData: ReportData = JSON.parse(storedData)
       
-      const subject = `Ihr CO₂-Bericht – ${
-        typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name ?? 'AI Model'
-      }`;
-
-      // 1) Save lead to Supabase
-      const leadId = await saveLead(email, consentMarketing, {
-        source: 'co2-report',
+      // 1) Save lead (RLS requires consent_marketing=true)
+      await saveLead(email, consentRequired, {
+        source: 'co2-report', 
         sessionId: reportData?.sessionId,
         publicSlug: reportData?.publicSlug,
         tokens: reportData?.tokens,
         model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
         co2Grams: reportData?.co2Grams,
-      });
+      })
 
-      // 2) Build HTML and send email via Vercel API
+      // 2) Build email HTML + send
+      const subject = `Ihr CO₂-Bericht – ${
+        typeof reportData?.model === 'string' ? reportData.model : (reportData?.model?.name ?? 'AI Model')
+      }`
       const html = co2EmailHtml({
         resultGrams: reportData.co2Grams,
         model: typeof reportData.model === 'string' ? reportData.model : reportData.model.name,
         tokens: reportData.tokens,
         prompt: reportData.originalPrompt,
         comparisons: reportData.comparisons ?? [],
-      });
+      })
       
-      await sendReport(email, subject, html);
+      await sendReport(email, subject, html)
       
+      // Success - navigate to thanks page
       navigate('/thanks')
-    } catch (error) {
-      console.error('Error:', error)
-      alert('Fehler beim Speichern oder E-Mail-Versand. Bitte versuchen Sie es erneut.')
+    } catch (e: any) {
+      const msg = String(e?.message || '')
+      if (msg.includes('DUPLICATE_DAY') || msg.includes('23505')) {
+        alert('Sie haben heute bereits einen Bericht angefordert.')
+      } else if (msg.includes('row-level security')) {
+        alert('Bitte stimmen Sie der Datenverarbeitung zu (Checkbox).')
+      } else if (msg.startsWith('EMAIL_FAIL_') || msg.includes('Email')) {
+        alert('E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen.')
+      } else {
+        alert('Fehler beim Speichern oder E-Mail-Versand. Bitte versuchen Sie es erneut.')
+      }
+      console.error(e)
     } finally {
       setSending(false)
     }
@@ -166,13 +177,13 @@ export default function LeadModal({ sessionId, onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={!email || !consentRequired || sending}
+              disabled={sending || !email || !consentRequired}
               className={`${buttonPrimary} flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {sending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
-                  {t('lead.sending')}
+                  Senden…
                 </>
               ) : (
                 <>
