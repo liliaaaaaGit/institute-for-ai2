@@ -53,9 +53,8 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       // 1) Save lead (RLS requires consent_marketing=true)
       await saveLead(email, consentRequired, {
-        source: 'co2-report', 
+        source: 'co2-report',
         sessionId: reportData?.sessionId,
-        publicSlug: reportData?.publicSlug,
         tokens: reportData?.tokens,
         model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
         co2Grams: reportData?.co2Grams,
