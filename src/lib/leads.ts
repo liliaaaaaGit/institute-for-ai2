@@ -24,8 +24,6 @@ export async function saveLead(
       consent_policy_version: 'v1',
       meta: meta ?? null
     }]); // return=minimal
-    }]); // return=minimal
-+    }]); // return=minimal
 
   if (error) {
     if ((error as any).code === '23505') {
