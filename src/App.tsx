@@ -70,9 +70,10 @@ function TestApp() {
         <ul>
           <li>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
           <li>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
-          <li>VITE_APP_URL: {import.meta.env.VITE_APP_URL ? '✅ Set' : '❌ Missing'}</li>
+          <li>VITE_APP_URL: {import.meta.env.VITE_APP_URL ? '✅ Set' : '⚠️ Optional (Missing)'}</li>
           <li>NODE_ENV: {import.meta.env.NODE_ENV}</li>
           <li>MODE: {import.meta.env.MODE}</li>
+          <li>All env keys: {Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')).join(', ')}</li>
         </ul>
       </div>
 
