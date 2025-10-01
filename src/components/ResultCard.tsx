@@ -116,40 +116,6 @@ export default function ResultCard({ result, onGetReport }: Props) {
         )}
       </div>
 
-      {/* Public Report Link */}
-      <div className="p-4 bg-brand-ink/5 rounded-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-brand-ink text-sm">{t('result.shareTitle')}</p>
-            <p className={`text-xs text-brand-ink/60`}>{t('result.shareDesc')}</p>
-          </div>
-          <button
-            onClick={() => {
-              const shareUrl = `${window.location.origin}/report/${result.publicSlug}`
-              console.log('=== SHARE BUTTON CLICKED ===')
-              console.log('Share URL:', shareUrl)
-              console.log('Public slug:', result.publicSlug)
-              console.log('Current localStorage keys:', Object.keys(localStorage))
-              
-              navigator.clipboard.writeText(shareUrl).then(() => {
-                alert(t('result.linkCopied'))
-              }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea')
-                textArea.value = shareUrl
-                document.body.appendChild(textArea)
-                textArea.select()
-                document.execCommand('copy')
-                document.body.removeChild(textArea)
-                alert(t('result.linkCopied'))
-              })
-            }}
-            className="flex items-center text-brand-red hover:text-brand-red/80 text-sm font-medium"
-          >
-            {t('result.copyLink')} <ExternalLink className="h-4 w-4 ml-1" stroke="currentColor" strokeWidth="2" />
-          </button>
-        </div>
-      </div>
 
       {/* CTA */}
       <div className="border-t pt-6">
