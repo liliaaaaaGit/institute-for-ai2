@@ -40,6 +40,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
     
     try {
       console.debug('Submit lead', { email, consentRequired })
+      console.log('🎯 Attempting to send email to:', email)
       
       // Get stored report data
       const storageKey = `report_${sessionId}`

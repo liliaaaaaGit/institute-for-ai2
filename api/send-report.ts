@@ -4,7 +4,6 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const TEST_ALLOWED_TO = process.env.RESEND_TEST_ALLOWED_TO; // set to your own address in Vercel
-const TEST_MODE = !!TEST_ALLOWED_TO;
 const FROM = process.env.FROM_EMAIL;           // e.g. "Institute for AI Austria <onboarding@resend.dev>"
 const REPLY_TO = process.env.REPLY_TO || undefined; // optional
 
@@ -22,19 +21,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ ok: false, error: 'Missing required fields: to, subject, html' });
     }
 
-    // Resend test mode: only deliver to a single allowed address (owner).
-    if (TEST_MODE && to.toLowerCase() !== TEST_ALLOWED_TO?.toLowerCase()) {
+    // Only reroute in development/test environments, not production
+    const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+    
+    if (!isProd && TEST_ALLOWED_TO && to.toLowerCase() !== TEST_ALLOWED_TO.toLowerCase()) {
       const originalTo = to;
-      // Option A (uncomment to block instead of reroute):
-      // return res.status(403).json({
-      //   ok: false,
-      //   error: `Test mode: Emails can only be sent to ${TEST_ALLOWED_TO}. Verify a domain to send to others.`
-      // });
-      // Option B (default): reroute to owner address and annotate
-      to = TEST_ALLOWED_TO!;
-      subject = `[Test rerouted] ${subject}`;
-      html = `<p style="font:14px/1.4 -apple-system,Segoe UI,Roboto,Arial">` +
-             `<em>Testmodus: Ursprünglicher Empfänger: ${originalTo}</em></p>` + html;
+      to = TEST_ALLOWED_TO;
+      subject = `[Test rerouted from ${originalTo}] ${subject}`;
+      html = `<p style="font:14px/1.4 -apple-system,Segoe UI,Roboto,Arial;background:#fff3cd;padding:8px;border:1px solid #ffeaa7;margin-bottom:16px;">` +
+             `<strong>🧪 Test Mode:</strong> Original recipient was <code>${originalTo}</code></p>` + html;
     }
 
     if (!FROM) {

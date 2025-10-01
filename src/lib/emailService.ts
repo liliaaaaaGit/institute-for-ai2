@@ -1,15 +1,28 @@
 // src/lib/emailService.ts
 export async function sendReport(to: string, subject: string, html: string, replyTo?: string) {
+  console.log('🚀 Sending email to:', to);
+  console.log('📧 Subject:', subject);
+  console.log('🌍 Environment:', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    isProd: process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+  });
+  
   const res = await fetch('/api/send-report', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, html, replyTo }),
   });
+  
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    console.error('❌ Email send failed:', err);
     throw new Error(err?.error ?? `E-Mail failed (${res.status})`);
   }
-  return res.json() as Promise<{ ok: boolean; id: string | null }>;
+  
+  const result = await res.json() as { ok: boolean; id: string | null };
+  console.log('✅ Email sent successfully:', result);
+  return result;
 }
 
 // Legacy function for backward compatibility - will be removed after refactoring
