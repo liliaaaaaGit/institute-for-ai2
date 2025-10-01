@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { X, Mail, Shield, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { upsertLead, logLeadEvent } from '@/lib/leads'
-import { sendReport } from '@/lib/emailService'
-import { co2EmailHtml } from '@/emails/Co2Report.html'
+import { upsertLead, logLeadEvent } from '../lib/leads'
+import { sendReport } from '../lib/emailService'
+import { co2EmailHtml } from '../emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
 import { t } from '../i18n'
 

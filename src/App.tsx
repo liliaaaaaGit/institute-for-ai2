@@ -1,6 +1,11 @@
 import React from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import HomePage from './pages/HomePage'
+import ReportPage from './pages/ReportPage'
+import ThanksPage from './pages/ThanksPage'
+import ConfirmPage from './pages/ConfirmPage'
 
-// Minimal error boundary component
+// Error boundary component
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error?: Error }
@@ -21,22 +26,22 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ 
-          padding: '20px', 
-          fontFamily: 'Arial, sans-serif',
-          backgroundColor: '#fee',
-          border: '1px solid #f00',
-          margin: '20px'
-        }}>
-          <h1>Application Error</h1>
-          <p>Something went wrong. Check the browser console for details.</p>
-          <details>
-            <summary>Error Details</summary>
-            <pre>{String(this.state.error)}</pre>
-          </details>
-          <button onClick={() => window.location.reload()}>
-            Reload Page
-          </button>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-card p-8 max-w-md w-full text-center">
+            <div className="bg-red-100 p-3 rounded-2xl w-fit mx-auto mb-4">
+              <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Anwendungsfehler</h1>
+            <p className="text-gray-600 mb-4">Ein unerwarteter Fehler ist aufgetreten.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-brand-red text-white px-4 py-2 rounded-xl hover:bg-brand-red/90 transition-colors"
+            >
+              Seite neu laden
+            </button>
+          </div>
         </div>
       )
     }
@@ -45,91 +50,19 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// Minimal test component
-function TestApp() {
-  console.log('TestApp rendering...')
-  
-  return (
-    <div style={{ 
-      padding: '20px', 
-      fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#f0f8ff',
-      minHeight: '100vh'
-    }}>
-      <h1 style={{ color: '#D52100' }}>CO₂ Calculator - Debug Mode</h1>
-      <p>If you can see this, React is working!</p>
-      
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '15px', 
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        marginTop: '20px'
-      }}>
-        <h2>Environment Check</h2>
-        <ul>
-          <li>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
-          <li>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
-          <li>VITE_APP_URL: {import.meta.env.VITE_APP_URL ? '✅ Set' : '⚠️ Optional (Missing)'}</li>
-          <li>NODE_ENV: {import.meta.env.NODE_ENV}</li>
-          <li>MODE: {import.meta.env.MODE}</li>
-          <li>All env keys: {Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')).join(', ')}</li>
-        </ul>
-      </div>
-
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '15px', 
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        marginTop: '20px'
-      }}>
-        <h2>Browser Info</h2>
-        <ul>
-          <li>User Agent: {navigator.userAgent}</li>
-          <li>URL: {window.location.href}</li>
-          <li>Protocol: {window.location.protocol}</li>
-        </ul>
-      </div>
-
-      <button 
-        onClick={() => {
-          console.log('Button clicked - testing JavaScript execution')
-          alert('JavaScript is working!')
-        }}
-        style={{
-          backgroundColor: '#D52100',
-          color: 'white',
-          padding: '10px 20px',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          marginTop: '20px'
-        }}
-      >
-        Test JavaScript
-      </button>
-    </div>
-  )
-}
-
 export default function App() {
-  console.log('App component loading...')
-  
-  try {
-    return (
-      <ErrorBoundary>
-        <TestApp />
-      </ErrorBoundary>
-    )
-  } catch (error) {
-    console.error('App render error:', error)
-    return (
-      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <h1>Critical Error</h1>
-        <p>Failed to render the application.</p>
-        <pre>{String(error)}</pre>
-      </div>
-    )
-  }
+  return (
+    <ErrorBoundary>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/report/:slug" element={<ReportPage />} />
+            <Route path="/thanks" element={<ThanksPage />} />
+            <Route path="/confirm/:token" element={<ConfirmPage />} />
+          </Routes>
+        </div>
+      </Router>
+    </ErrorBoundary>
+  )
 }

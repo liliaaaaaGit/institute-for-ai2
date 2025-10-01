@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { HelpCircle, Zap } from 'lucide-react'
-import { AIModel } from '@/types'
+import { AIModel } from '../types'
 import { body, buttonPrimary } from './Ui'
 import { t } from '../i18n'
 

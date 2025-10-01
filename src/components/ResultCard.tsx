@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Car, Monitor, Smartphone, ExternalLink, Download, Lightbulb, Home, Info } from 'lucide-react'
-import { buildComparisons, assumptionsText } from '@/lib/comparisons'
+import { buildComparisons, assumptionsText } from '../lib/comparisons'
 import { h3, body, buttonPrimary, card } from './Ui'
 import { t, formatNumber } from '../i18n'
 
