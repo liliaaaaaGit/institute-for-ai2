@@ -1,165 +1,206 @@
 // /src/emails/Co2Report.html.ts
-import {
-  brand,
-  sectionTitle,
-  cardWrapOpen,
-  cardWrapClose,
-  listBullets,
-  quickWins,
-  midTerm,
-  advanced,
-  modelCardsHtml,
-  subjectFor as subjectFromTemplates,
-  htmlEscape,
-} from "./reportTemplates";
+import { brand, bullets, htmlEscape, modelCards, sectionTitle, subjectFor as _subjectFor } from "./reportTemplates";
 
 export type Co2Props = {
-  // Header & Summary
   model?: string;
-  co2?: string;       // "45,6"
-  tokens?: string;    // "3.040"
-
-  // Alltagsvergleiche (nur EIN Wert pro Zeile – keine Duplikate)
-  pcMinutes?: string;        // "8.2"
-  carMeters?: string;        // "180"
-  householdMinutes?: string; // "12.5"
-  phoneCharges?: string;     // "1.2"
-  ledHours?: string;         // "76"
+  co2Grams?: number;          // z. B. 45.6
+  tokens?: number;            // z. B. 3040
+  // Vergleichswerte – bereits auf die finale Einheit umgerechnet
+  pcMinutes?: number;         // Minuten
+  carMeters?: number;         // Meter
+  householdMinutes?: number;  // Minuten
+  phoneCharges?: number;      // Aufladungen
+  ledHours?: number;          // Stunden
 };
 
-// Re-Export für bequemen Import an anderer Stelle
-export const subjectFor = subjectFromTemplates;
+const defaultProps: Required<Co2Props> = {
+  model: "GPT-4",
+  co2Grams: 45.6,
+  tokens: 3040,
+  pcMinutes: 8.2,
+  carMeters: 180,
+  householdMinutes: 12.5,
+  phoneCharges: 1.2,
+  ledHours: 76,
+};
 
-/**
- * Baut das vollständige HTML für den E-Mail-Report.
- * Server-seitig verwenden: an Resend mit { html } senden.
- */
-export default function co2ReportHtml({
-  model = "GPT-4",
-  co2 = "45,6",
-  tokens = "3.040",
-  pcMinutes = "8,2",
-  carMeters = "180",
-  householdMinutes = "12,5",
-  phoneCharges = "1,2",
-  ledHours = "76",
-}: Co2Props = {}): string {
-  const h = {
-    wrapOpen: `<div style="font-family:${brand.font};max-width:600px;margin:0 auto;background:${brand.bg}">`,
-    wrapClose: `</div>`,
-    header: `
-      <div style="background:${brand.red};padding:16px 24px">
-        <div style="color:#fff;font:600 18px/1 ${brand.font}">Institute for AI</div>
-      </div>
-    `,
-    titleBlock: `
-      <div style="padding:32px 24px 24px">
-        <h1 style="margin:0 0 8px 0;color:${brand.text};font:800 28px/1.25 ${brand.font};letter-spacing:-0.5px">
-          Ihr CO₂-Bericht – ${htmlEscape(model)}
-        </h1>
-        <p style="margin:0;color:${brand.textDim};font:400 16px/1.4 ${brand.font}">
-          Institute for AI
-        </p>
-      </div>
-    `,
-    summary: `
-      <div style="padding:0 24px 24px">
-        ${cardWrapOpen()}
-          <h2 style="margin:0 0 12px 0;color:${brand.text};font:700 20px/1.3 ${brand.font}">Zusammenfassung</h2>
-          <p style="margin:0;color:${brand.text};font:400 16px/1.55 ${brand.font}">
-            Geschätzter CO₂-Ausstoß: <strong>${htmlEscape(
-              co2
-            )} g CO₂</strong> (Modell: ${htmlEscape(model)}, Tokens: ${htmlEscape(
-      tokens
-    )}).
-          </p>
-        ${cardWrapClose}
-      </div>
-    `,
-    comparisons: `
-      <div style="padding:0 24px 32px">
-        ${sectionTitle("Alltagsvergleiche")}
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" 
-               style="width:100%;background:${brand.card};border:1px solid ${brand.border};border-radius:${brand.radius};border-collapse:separate;border-spacing:0">
-          <tbody>
-            ${row("Desktop-PC", `${htmlEscape(pcMinutes)} Minuten`, true, false)}
-            ${row("Autofahrt (Benzin)", `${htmlEscape(carMeters)} Meter`)}
-            ${row("Haushaltsstrom", `${htmlEscape(householdMinutes)} Minuten`)}
-            ${row("Smartphone", `${htmlEscape(phoneCharges)} Aufladungen`)}
-            ${row("LED-Lampe (10 W)", `${htmlEscape(ledHours)} Stunden`, false, true)}
-          </tbody>
-        </table>
-      </div>
-    `,
-    optimizationHeader: `
-      <div style="padding:0 24px 24px">
-        ${sectionTitle("CO₂-Optimierung")}
-      </div>
-    `,
-    actions: `
-      <div style="padding:0 24px 32px">
-        ${actionCard("Quick Wins (sofort)", "#FFE3DE", quickWins)}
-        ${actionCard("Mittelfristig (Prozess & Setup)", "#FFD6CF", midTerm)}
-        ${actionCard("Fortgeschritten (Power-User)", "#FFC9C1", advanced)}
-      </div>
-    `,
-    models: `
-      <div style="padding:0 24px 32px">
-        ${sectionTitle("Model Efficiency Guide")}
-        ${modelCardsHtml()}
-      </div>
-    `,
-    footer: `
-      <div style="padding:24px;border-top:1px solid ${brand.border}">
-        <p style="margin:0 0 12px 0;color:${brand.textDim};font:400 14px/1.45 ${brand.font}">
-          <strong>Datenschutzhinweis:</strong> Sie erhalten diese E-Mail, weil Sie dem Versand eines CO₂-Berichts zugestimmt haben.
-          Details finden Sie in den Datenschutzhinweisen auf der Website (https://institute-for-ai.com/impressum-datenschutz).
-        </p>
-        <p style="margin:0;color:${brand.textDim};font:400 14px/1.45 ${brand.font}">© Institute for AI</p>
-      </div>
-    `,
-  };
-
-  return [
-    h.wrapOpen,
-    h.header,
-    h.titleBlock,
-    h.summary,
-    h.comparisons,
-    h.optimizationHeader,
-    h.actions,
-    h.models,
-    h.footer,
-    h.wrapClose,
-  ].join("");
-}
-
-// ===== Local helpers for this file =====
-
-function row(
-  label: string,
-  value: string,
-  isFirst = false,
-  isLast = false
-): string {
-  const b = isLast ? "none" : `1px solid ${brand.border}`;
+// kleine Tabellenzeile für „Alltagsvergleiche“
+function compRow(label: string, value: string, isLast = false) {
   return `
-  <tr>
-    <td style="padding:16px 20px;font:400 16px/1.5 ${brand.font};color:${brand.text};border-bottom:${b}">${htmlEscape(
-      label
-    )}</td>
-    <td style="padding:16px 20px;font:600 16px/1.5 ${brand.font};color:${brand.text};text-align:right;border-bottom:${b}">${htmlEscape(
-      value
-    )}</td>
-  </tr>`;
+    <tr>
+      <td style="padding:16px 20px;font:400 16px/1.5 ${brand.font};color:${brand.dark};border-bottom:${isLast ? "none" : `1px solid ${brand.border}`};">${htmlEscape(
+        label
+      )}</td>
+      <td style="padding:16px 20px;font:600 16px/1.5 ${brand.font};color:${brand.dark};text-align:right;border-bottom:${isLast ? "none" : `1px solid ${brand.border}`};">${htmlEscape(
+        value
+      )}</td>
+    </tr>
+  `;
 }
 
-function actionCard(title: string, bg: string, items: string[]) {
-  return `
-  <div style="background:${bg};border-radius:${brand.radius};padding:20px;margin:0 0 16px 0">
-    <h3 style="margin:0 0 16px 0;color:${brand.text};font:700 18px/1.3 ${brand.font}">${htmlEscape(
-      title
-    )}</h3>
-    ${listBullets(items)}
-  </div>`;
+export function co2EmailHtml(input?: Co2Props): string {
+  const p = { ...defaultProps, ...(input || {}) };
+
+  // Action-Listen (Texte bereits abgestimmt)
+  const quickWins = bullets([
+    "Kurze, präzise Prompts nutzen – unnötigen Kontext weglassen.",
+    "Für einfache Aufgaben leichtere Modelle verwenden (z. B. GPT-3.5, Claude Haiku, Llama-7B).",
+    "Ähnliche Fragen bündeln (Batching) statt viele einzelne Anfragen zu stellen.",
+  ]);
+
+  const midTerm = bullets([
+    "Zwischenergebnisse cachen – wiederkehrende Berechnungen vermeiden.",
+    "Nützliche Antworten speichern und wiederverwenden (z. B. eine kleine Snippet-Bibliothek).",
+    "Bei Bild/Video: Auflösung und Schritte bewusst niedrig halten – nur bei Bedarf erhöhen.",
+    "Wenn möglich, Ausführung in Zeiten mit geringerer Netz-Emission planen.",
+  ]);
+
+  const advanced = bullets([
+    "„Right-Sizing“: Modelle pro Use-Case benchmarken – kleinere 7–13B-Modelle sind oft 5–10× effizienter.",
+    "Streaming verwenden – früh abbrechen spart Tokens.",
+    "System-/Few-Shot-Prompts stark verdichten; Beispiele auf das Minimum reduzieren.",
+    "Monitoring etablieren: Tokens, g CO₂/Anfrage sowie Cache-Ersparnisse kontinuierlich messen.",
+  ]);
+
+  return `<!doctype html>
+<html lang="de">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- Google Fonts: Raleway (optional – viele Clients laden das) -->
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>${htmlEscape(_subjectFor(p.model))}</title>
+  </head>
+  <body style="margin:0;padding:0;background:${brand.bg}">
+    <center style="width:100%;background:${brand.bg}">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:${brand.bg}">
+        <tr>
+          <td align="center" style="padding:0">
+            <table role="presentation" width="100%" style="max-width:600px;border-collapse:collapse;background:${brand.bg}">
+              
+              <!-- Header-Band -->
+              <tr>
+                <td style="background:${brand.red};padding:16px 24px;color:#fff;font:600 18px/1 ${brand.font}">
+                  Institute for AI
+                </td>
+              </tr>
+
+              <!-- Titelblock -->
+              <tr>
+                <td style="padding:32px 24px 8px 24px;background:${brand.bg}">
+                  <h1 style="margin:0 0 8px 0;font:700 28px/1.2 ${brand.font};color:${brand.dark};letter-spacing:-0.3px">
+                    Ihr CO₂-Bericht – ${htmlEscape(p.model)}
+                  </h1>
+                  <p style="margin:0;font:400 16px/1.4 ${brand.font};color:#666">Institute for AI</p>
+                </td>
+              </tr>
+
+              <!-- Zusammenfassung -->
+              <tr>
+                <td style="padding:16px 24px;background:${brand.bg}">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;background:#fff;border:1px solid ${brand.border};border-radius:${brand.radius}">
+                    <tr>
+                      <td style="padding:20px">
+                        <h2 style="margin:0 0 12px 0;font:700 20px/1.3 ${brand.font};color:${brand.dark}">Zusammenfassung</h2>
+                        <p style="margin:0;font:400 16px/1.55 ${brand.font};color:${brand.dark}">
+                          Geschätzter CO₂-Ausstoß: <strong>${htmlEscape(p.co2Grams.toLocaleString("de-DE"))} g CO₂</strong>
+                          (Modell: ${htmlEscape(p.model)}, Tokens: ${htmlEscape(p.tokens.toLocaleString("de-DE"))}).
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Alltagsvergleiche -->
+              <tr>
+                <td style="padding:8px 24px 24px;background:${brand.bg}">
+                  ${sectionTitle("Alltagsvergleiche")}
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;background:#fff;border:1px solid ${brand.border};border-radius:${brand.radius}">
+                    <tbody>
+                      ${compRow("Desktop-PC", `${p.pcMinutes.toLocaleString("de-DE")} Minuten`)}
+                      ${compRow("Autofahrt (Benzin)", `${p.carMeters.toLocaleString("de-DE")} Meter`)}
+                      ${compRow("Haushaltsstrom", `${p.householdMinutes.toLocaleString("de-DE")} Minuten`)}
+                      ${compRow("Smartphone", `${p.phoneCharges.toLocaleString("de-DE")} Aufladungen`)}
+                      ${compRow("LED-Lampe (10 W)", `${p.ledHours.toLocaleString("de-DE")} Stunden`, true)}
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- CO2-Optimierung -->
+              <tr>
+                <td style="padding:0 24px 8px;background:${brand.bg}">
+                  ${sectionTitle("CO₂-Optimierung")}
+                </td>
+              </tr>
+
+              <!-- Quick Wins -->
+              <tr>
+                <td style="padding:0 24px 16px;background:${brand.bg}">
+                  ${actionCard("Quick Wins (sofort)", "#FFE3DE", quickWins)}
+                </td>
+              </tr>
+
+              <!-- Mittelfristig -->
+              <tr>
+                <td style="padding:0 24px 16px;background:${brand.bg}">
+                  ${actionCard("Mittelfristig (Prozess & Setup)", "#FFD6CF", midTerm)}
+                </td>
+              </tr>
+
+              <!-- Fortgeschritten -->
+              <tr>
+                <td style="padding:0 24px 24px;background:${brand.bg}">
+                  ${actionCard("Fortgeschritten (Power-User)", "#FFC9C1", advanced)}
+                </td>
+              </tr>
+
+              <!-- Model Efficiency Guide -->
+              <tr>
+                <td style="padding:0 24px 16px;background:${brand.bg}">
+                  ${sectionTitle("Model Efficiency Guide")}
+                  ${modelCards()}
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding:24px;background:${brand.bg};border-top:1px solid ${brand.border}">
+                  <p style="margin:0 0 12px 0;font:400 14px/1.5 ${brand.font};color:#666">
+                    <strong>Datenschutzhinweis:</strong> Sie erhalten diese E-Mail, weil Sie dem Versand eines CO₂-Berichts zugestimmt haben. Details finden Sie in den Datenschutzhinweisen auf der Website (https://institute-for-ai.com/impressum-datenschutz).
+                  </p>
+                  <p style="margin:0;font:400 14px/1.5 ${brand.font};color:#666">© Institute for AI</p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </center>
+  </body>
+</html>`;
 }
+
+// kleine Helferkarte mit farbigem Hintergrund
+function actionCard(title: string, bg: string, listHtml: string) {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;background:${bg};border-radius:${brand.radius}">
+      <tr>
+        <td style="padding:20px">
+          <h3 style="margin:0 0 12px 0;font:700 18px/1.3 ${brand.font};color:${brand.dark}">${htmlEscape(
+            title
+          )}</h3>
+          ${listHtml}
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Betreff für den Sender wiederverwenden
+export const subjectFor = _subjectFor;
+
+// Optionaler Default-Export (falls du irgendwo `default` importierst)
+export default co2EmailHtml;
