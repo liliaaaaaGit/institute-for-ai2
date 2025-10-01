@@ -1,119 +1,373 @@
-// /src/emails/reportTemplates.ts
-export type Comparison = { label: string; value: string };
+// /src/emails/EmailTemplate.tsx
+import * as React from "react";
 
-export const brand = {
-  // Institute for AI Austria
-  ink: "#1C0202",
-  red: "#D52100",
-  white: "#FFFFFF",
-
-  // light mail theme
-  pageBg: "#FFF6F5",                // very light red-tint
-  cardBg: "#FFFFFF",
-  borderSoft: "rgba(213,33,0,0.15)",
-
-  // section tints (all red family; strongest first)
-  tintStrong: "rgba(213,33,0,0.12)", // Quick Wins
-  tintMid: "rgba(213,33,0,0.08)",    // Mid-term
-  tintSoft: "rgba(213,33,0,0.05)",   // Advanced
-
-  radius: "14px",
-  font: `'Raleway', -apple-system, Segoe UI, Arial, sans-serif`,
+type Props = {
+  model?: string;
+  co2?: string;              // z.B. "45.6"
+  tokens?: string;           // z.B. "3.040"
+  pcMinutes?: string;        // z.B. "8.2"
+  carMeters?: string;        // z.B. "180"
+  householdMinutes?: string; // z.B. "12.5"
+  phoneCharges?: string;     // z.B. "1.2"
+  ledHours?: string;         // z.B. "76"
 };
 
-export const fmtDE = (n: number, max = 1) =>
-  n.toLocaleString("de-DE", { maximumFractionDigits: max });
-
-export const htmlEscape = (s = "") =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-export const sectionTitle = (text: string) =>
-  `<h3 style="margin:0 0 10px 0;font:700 18px/1.35 ${brand.font};color:${brand.ink}">${htmlEscape(text)}</h3>`;
-
-export const bullets = (items: string[]) =>
-  `<ul style="margin:0;padding:0 0 0 18px;font:400 14px/1.65 ${brand.font};color:${brand.ink}">
-    ${items.map((i) => `<li style="margin:6px 0">${htmlEscape(i)}</li>`).join("")}
-  </ul>`;
-
-export const pill = (label: string) =>
-  `<span style="display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid ${brand.borderSoft};
-           background:${brand.white};color:${brand.ink};font:700 11px/1 ${brand.font}">
-     ${htmlEscape(label)}
-   </span>`;
-
-// Simple inline fallback logo (only used if no logoUrl is provided)
-export const logoInlineSvg = `
-<svg width="34" height="34" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Institute for AI Austria">
-  <g fill="none" stroke="${brand.red}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 76 L48 18 L80 76" />
-    <path d="M36 60 h20" />
-    <path d="M72 24 v48" />
-    <path d="M84 24 v48" />
-  </g>
-</svg>
-`;
-
-// Guidance lists (already approved)
-export const quickWins = [
-  "Kurze, präzise Prompts nutzen – unnötigen Kontext weglassen.",
-  "Für einfache Aufgaben leichtere Modelle verwenden (z. B. GPT-3.5, Claude Haiku, Llama-7B).",
-  "Ähnliche Fragen bündeln (Batching) statt viele einzelne Anfragen zu stellen.",
-];
-
-export const midTerm = [
-  "Zwischenergebnisse cachen – wiederkehrende Berechnungen vermeiden.",
-  "Nützliche Antworten speichern und wiederverwenden (z. B. eine kleine Snippet-Bibliothek).",
-  "Bei Bild/Video: Auflösung und Schritte bewusst niedrig halten – nur bei Bedarf erhöhen.",
-  "Wenn möglich, Ausführung in Zeiten mit geringerer Netz-Emission planen.",
-];
-
-export const advanced = [
-  "„Right-Sizing“: Modelle pro Use-Case benchmarken – kleinere 7–13B-Modelle sind oft 5–10× effizienter.",
-  "Streaming verwenden – früh abbrechen spart Tokens.",
-  "System-/Few-Shot-Prompts stark verdichten; Beispiele auf das Minimum reduzieren.",
-  "Monitoring etablieren: Tokens, g CO₂/Anfrage sowie Cache-Ersparnisse kontinuierlich messen.",
-];
-
-// Model guide (no emojis; one badge only)
-export const modelGuide = [
-  { name: "GPT-3.5", desc: "≈3 mg CO₂/Token – schnell, günstig", badge: "High" },
-  { name: "Claude Haiku", desc: "≈3 mg/Token – effizient für Routine", badge: "High" },
-  { name: "Llama 2/3 7–13B", desc: "≈3 mg/Token – flexibel/self-host", badge: "High" },
-  { name: "Claude Sonnet / Gemini Pro", desc: "≈7,5 mg/Token – ausgewogen", badge: "Medium" },
-  { name: "GPT-4 / Claude Opus", desc: "≈15 mg/Token – nur wenn nötig", badge: "Low" },
-];
-
-export const badge = (label: string) => {
-  const bg =
-    label === "High" ? "rgba(213,33,0,0.18)" : label === "Medium" ? "rgba(213,33,0,0.13)" : "rgba(213,33,0,0.10)";
-  return `<span style="display:inline-block;padding:6px 10px;border-radius:999px;background:${bg};
-               color:${brand.ink};font:700 11px/1 ${brand.font};border:1px solid ${brand.borderSoft}">
-            ${htmlEscape(label)}
-          </span>`;
+const colors = {
+  brandRed: "#D52100",
+  textDark: "#1C0202",
+  textDim: "#666666",
+  border: "rgba(213, 33, 0, 0.12)",
+  bgSoft: "#FFF2F0",
+  badge: "#F6C7C0",
+  card: "#FFFFFF",
 };
 
-export const modelCards = () =>
-  modelGuide
-    .map(
-      (m) => `
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 10px 0;border-collapse:separate">
-  <tr>
-    <td style="background:${brand.cardBg};border:1px solid ${brand.borderSoft};border-radius:${brand.radius};padding:14px">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">
-        <tr>
-          <td style="font:700 16px/1.35 ${brand.font};color:${brand.ink};padding:0">${htmlEscape(m.name)}</td>
-          <td style="text-align:right;padding:0">${badge(m.badge)}</td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding-top:6px;font:400 14px/1.6 ${brand.font};color:${brand.ink};opacity:.85">
-            ${htmlEscape(m.desc)}
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>`
-    )
-    .join("");
+const fontStack =
+  'Raleway, -apple-system, "Segoe UI", Roboto, Arial, Helvetica, sans-serif';
 
-export const subjectFor = (model: string) => `Ihr CO₂-Bericht – ${model}`;
+export default function EmailTemplate({
+  model = "GPT-4",
+  co2 = "45,6",
+  tokens = "3.040",
+  pcMinutes = "8,2",
+  carMeters = "180",
+  householdMinutes = "12,5",
+  phoneCharges = "1,2",
+  ledHours = "76",
+}: Props) {
+  return (
+    <div
+      style={{
+        fontFamily: fontStack,
+        maxWidth: 600,
+        margin: "0 auto",
+        background: colors.bgSoft,
+      }}
+    >
+      {/* Header-Band */}
+      <div style={{ background: colors.brandRed, padding: "16px 24px" }}>
+        <div style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>
+          Institute for AI
+        </div>
+      </div>
+
+      {/* Titel */}
+      <div style={{ padding: "32px 24px 24px" }}>
+        <h1
+          style={{
+            fontFamily: fontStack,
+            fontSize: 28,
+            fontWeight: 700,
+            color: colors.textDark,
+            margin: "0 0 8px 0",
+            letterSpacing: -0.5,
+          }}
+        >
+          Ihr CO₂-Bericht – {model}
+        </h1>
+        <p style={{ fontSize: 16, color: colors.textDim, margin: 0 }}>
+          Institute for AI
+        </p>
+      </div>
+
+      {/* Zusammenfassung */}
+      <SectionPad>
+        <Card>
+          <H2>Zusammenfassung</H2>
+          <p style={{ fontSize: 16, color: colors.textDark, margin: 0, lineHeight: 1.5 }}>
+            Geschätzter CO₂-Ausstoß: <strong>{co2} g CO₂</strong> (Modell: {model}, Tokens: {tokens}).
+          </p>
+        </Card>
+      </SectionPad>
+
+      {/* Alltagsvergleiche */}
+      <div style={{ padding: "0 24px 32px" }}>
+        <H2>Alltagsvergleiche</H2>
+        <table
+          style={{
+            width: "100%",
+            border: `1px solid ${colors.border}`,
+            borderRadius: 14,
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            background: colors.card,
+          }}
+        >
+          <tbody>
+            <Row label="Desktop-PC" value={`${pcMinutes} Minuten`} first />
+            <Row label="Autofahrt (Benzin)" value={`${carMeters} Meter`} />
+            <Row label="Haushaltsstrom" value={`${householdMinutes} Minuten`} />
+            <Row label="Smartphone" value={`${phoneCharges} Aufladungen`} />
+            <Row label="LED-Lampe (10 W)" value={`${ledHours} Stunden`} last />
+          </tbody>
+        </table>
+      </div>
+
+      {/* CO2-Optimierung */}
+      <div style={{ padding: "0 24px 24px" }}>
+        <H2>CO₂-Optimierung</H2>
+      </div>
+
+      <div style={{ padding: "0 24px 32px" }}>
+        <ActionCard
+          title="Quick Wins (sofort)"
+          bg="#FFE3DE"
+          items={[
+            "Kurze, präzise Prompts nutzen – unnötigen Kontext weglassen.",
+            "Für einfache Aufgaben leichtere Modelle verwenden (z. B. GPT-3.5, Claude Haiku, Llama-7B).",
+            "Ähnliche Fragen bündeln (Batching) statt viele einzelne Anfragen zu stellen.",
+          ]}
+        />
+        <ActionCard
+          title="Mittelfristig (Prozess & Setup)"
+          bg="#FFD6CF"
+          items={[
+            "Zwischenergebnisse cachen – wiederkehrende Berechnungen vermeiden.",
+            "Nützliche Antworten speichern und wiederverwenden (z. B. eine kleine Snippet-Bibliothek).",
+            "Bei Bild/Video: Auflösung und Schritte bewusst niedrig halten – nur bei Bedarf erhöhen.",
+            "Wenn möglich, Ausführung in Zeiten mit geringerer Netz-Emission planen.",
+          ]}
+        />
+        <ActionCard
+          title="Fortgeschritten (Power-User)"
+          bg="#FFC9C1"
+          items={[
+            "Right-Sizing: Modelle pro Use-Case benchmarken – kleinere 7–13B-Modelle sind oft 5–10× effizienter.",
+            "Streaming verwenden – früh abbrechen spart Tokens.",
+            "System-/Few-Shot-Prompts stark verdichten; Beispiele auf das Minimum reduzieren.",
+            "Monitoring etablieren: Tokens, g CO₂/Anfrage sowie Cache-Ersparnisse kontinuierlich messen.",
+          ]}
+        />
+      </div>
+
+      {/* Model Efficiency Guide */}
+      <div style={{ padding: "0 24px 32px" }}>
+        <H2>Model Efficiency Guide</H2>
+        <ModelCard
+          model="GPT-3.5"
+          efficiency="High"
+          desc="≈3 mg CO₂/Token – schnell, günstig"
+        />
+        <ModelCard
+          model="Claude Haiku"
+          efficiency="High"
+          desc="≈3 mg/Token – effizient für Routine"
+        />
+        <ModelCard
+          model="Llama 2/3 7–13B"
+          efficiency="High"
+          desc="≈3 mg/Token – flexibel/self-host"
+        />
+        <ModelCard
+          model="Claude Sonnet / Gemini Pro"
+          efficiency="Medium"
+          desc="≈7,5 mg/Token – ausgewogen"
+        />
+        <ModelCard
+          model="GPT-4 / Claude Opus"
+          efficiency="Low"
+          desc="≈15 mg/Token – nur wenn nötig"
+          last
+        />
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          padding: 24,
+          borderTop: `1px solid ${colors.border}`,
+        }}
+      >
+        <p
+          style={{
+            fontSize: 14,
+            color: colors.textDim,
+            margin: "0 0 12px 0",
+            lineHeight: 1.4,
+          }}
+        >
+          <strong>Datenschutzhinweis:</strong> Sie erhalten diese E-Mail, weil Sie dem
+          Versand eines CO₂-Berichts zugestimmt haben. Details finden Sie in den
+          Datenschutzhinweisen auf der Website (https://institute-for-ai.com/impressum-datenschutz).
+        </p>
+        <p style={{ fontSize: 14, color: colors.textDim, margin: 0 }}>© Institute for AI</p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- kleine Hilfs-Komponenten ---------- */
+
+function SectionPad({ children }: { children: React.ReactNode }) {
+  return <div style={{ padding: "0 24px 24px" }}>{children}</div>;
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: colors.card,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 14,
+        padding: 20,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function H2({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      style={{
+        fontFamily: fontStack,
+        fontSize: 20,
+        fontWeight: 700,
+        color: colors.textDark,
+        margin: "0 0 16px 0",
+      }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function Row({
+  label,
+  value,
+  first,
+  last,
+}: {
+  label: string;
+  value: string;
+  first?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <tr>
+      <td
+        style={{
+          padding: "16px 20px",
+          fontSize: 16,
+          color: colors.textDark,
+          borderBottom: last ? "none" : `1px solid ${colors.border}`,
+          fontWeight: 400,
+        }}
+      >
+        {label}
+      </td>
+      <td
+        style={{
+          padding: "16px 20px",
+          fontSize: 16,
+          color: colors.textDark,
+          borderBottom: last ? "none" : `1px solid ${colors.border}`,
+          fontWeight: 600,
+          textAlign: "right",
+        }}
+      >
+        {value}
+      </td>
+    </tr>
+  );
+}
+
+function ActionCard({
+  title,
+  bg,
+  items,
+}: {
+  title: string;
+  bg: string;
+  items: string[];
+}) {
+  return (
+    <div
+      style={{
+        background: bg,
+        borderRadius: 14,
+        padding: 20,
+        marginBottom: 16,
+      }}
+    >
+      <h3
+        style={{
+          fontFamily: fontStack,
+          fontSize: 18,
+          fontWeight: 700,
+          color: colors.textDark,
+          margin: "0 0 16px 0",
+        }}
+      >
+        {title}
+      </h3>
+      <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
+        {items.map((t, i) => (
+          <li
+            key={i}
+            style={{ fontSize: 16, color: colors.textDark, marginBottom: 8, lineHeight: 1.5 }}
+          >
+            {t}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ModelCard({
+  model,
+  efficiency,
+  desc,
+  last,
+}: {
+  model: string;
+  efficiency: "High" | "Medium" | "Low";
+  desc: string;
+  last?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        background: colors.card,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 14,
+        padding: "16px 20px",
+        marginBottom: last ? 0 : 12,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <h4
+          style={{
+            fontFamily: fontStack,
+            fontSize: 16,
+            fontWeight: 600,
+            color: colors.textDark,
+            margin: "0 0 4px 0",
+          }}
+        >
+          {model}
+        </h4>
+        <p style={{ fontSize: 14, color: colors.textDim, margin: 0 }}>{desc}</p>
+      </div>
+      <span
+        style={{
+          background: colors.badge,
+          color: colors.textDark,
+          padding: "6px 12px",
+          borderRadius: 999,
+          fontSize: 12,
+          fontWeight: 600,
+          marginLeft: 16,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {efficiency}
+      </span>
+    </div>
+  );
+}
