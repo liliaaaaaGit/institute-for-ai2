@@ -28,7 +28,7 @@ export function buildComparisons(co2: number): Comparison[] {
   // 1) Desktop PC
   const pcHours = co2 / pc_g_per_h;
   const pcValue =
-    pcHours < 3 ? `${nf.format(pcHours * 60)} Minuten` : `${nf.format(pcHours)} Stunden`;
+    pcHours < 3 ? `${Math.round(pcHours * 60)} Minuten` : `${nf.format(pcHours)} Stunden`;
 
   // 2) Gasoline car
   const carKm = co2 / factors.car_g_per_km;
@@ -38,11 +38,11 @@ export function buildComparisons(co2: number): Comparison[] {
   // 3) Household electricity
   const hhHours = co2 / household_g_per_h;
   const hhValue =
-    hhHours < 2 ? `${nf.format(hhHours * 60)} Minuten` : `${nf.format(hhHours)} Stunden`;
+    hhHours < 2 ? `${Math.round(hhHours * 60)} Minuten` : `${nf.format(hhHours)} Stunden`;
 
   // 4) Smartphone charges
   const charges = co2 / phone_g_per_charge;
-  const chargesValue = `${nf.format(charges)} Aufladungen`;
+  const chargesValue = `${Math.round(charges)} Aufladungen`;
 
   // 5) LED bulb (10 W)
   const ledHours = co2 / led_g_per_h;
