@@ -55,13 +55,14 @@ export default function HomePage() {
 
   function getMockModels(): AIModel[] {
     return [
-      { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 12.0, is_active: true },
-      { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 10.0, is_active: true },
-      { id: '3', name: 'GPT-3.5', vendor: 'OpenAI', grams_per_1k_tokens: 7.0, is_active: true },
-      { id: '4', name: 'Claude Sonnet', vendor: 'Anthropic', grams_per_1k_tokens: 11.0, is_active: true },
-      { id: '5', name: 'Claude Haiku', vendor: 'Anthropic', grams_per_1k_tokens: 5.0, is_active: true },
-      { id: '6', name: 'Gemini 1.5 Pro', vendor: 'Google', grams_per_1k_tokens: 10.0, is_active: true },
-      { id: '7', name: 'Mistral 7B', vendor: 'Mistral AI', grams_per_1k_tokens: 4.0, is_active: true }
+      { id: '1', name: 'GPT-4', vendor: 'OpenAI', grams_per_1k_tokens: 5.0, is_active: true },
+      { id: '2', name: 'GPT-4o', vendor: 'OpenAI', grams_per_1k_tokens: 3.0, is_active: true },
+      { id: '3', name: 'GPT-3.5', vendor: 'OpenAI', grams_per_1k_tokens: 1.0, is_active: true },
+      { id: '4', name: 'Claude Sonnet', vendor: 'Anthropic', grams_per_1k_tokens: 3.0, is_active: true },
+      { id: '5', name: 'Claude Haiku', vendor: 'Anthropic', grams_per_1k_tokens: 1.0, is_active: true },
+      { id: '6', name: 'Gemini 1.5 Pro', vendor: 'Google', grams_per_1k_tokens: 2.5, is_active: true },
+      { id: '7', name: 'Mistral 7B', vendor: 'Mistral AI', grams_per_1k_tokens: 0.5, is_active: true },
+      { id: '8', name: 'Mistral Large', vendor: 'Mistral AI', grams_per_1k_tokens: 4.0, is_active: true }
     ]
   }
 
