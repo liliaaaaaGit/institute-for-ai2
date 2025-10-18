@@ -65,7 +65,6 @@ export const dict = {
     "thanks.reportItem1": "• Detaillierte CO₂-Aufschlüsselung und Methodik",
     "thanks.reportItem2": "• Vergleich mit Branchenbenchmarks",
     "thanks.reportItem3": "• Empfehlungen zur Reduzierung von KI-Emissionen",
-    "thanks.reportItem4": "• Exportoptionen (PDF, CSV)",
     "thanks.backToCalculator": "Weiteren Prompt berechnen",
     "thanks.noEmail": "E-Mail nicht erhalten? Prüfen Sie Ihren Spam-Ordner oder versuchen Sie es in ein paar Minuten erneut.",
     
