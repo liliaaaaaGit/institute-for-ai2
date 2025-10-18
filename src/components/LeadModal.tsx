@@ -145,9 +145,8 @@ export default function LeadModal({ sessionId, onClose }: Props) {
                 className="mt-1 rounded border-brand-ink/30 text-brand-red focus:ring-brand-red focus:ring-2"
                 required
               />
-              <label htmlFor="consent-required" className={`ml-3 text-sm text-brand-ink/90`} dangerouslySetInnerHTML={{
-                __html: t('lead.consentRequired').replace('Datenschutzhinweisen', `<a href="#" class="text-brand-red hover:underline">Datenschutzhinweisen</a>`)
-              }}>
+              <label htmlFor="consent-required" className={`ml-3 text-sm text-brand-ink/90`}>
+                {t('lead.consentRequired')}
               </label>
             </div>
 
