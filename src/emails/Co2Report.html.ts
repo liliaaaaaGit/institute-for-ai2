@@ -73,17 +73,17 @@ export function co2EmailHtml(input?: Co2Props): string {
 
   const advanced = bullets([
     lang === 'de'
-      ? "„Right-Sizing": Modelle pro Use-Case benchmarken – kleinere 7–13B-Modelle sind oft 5–10× effizienter."
-      : ""Right-Sizing": Benchmark models per use case – smaller 7–13B models are often 5–10× more efficient.",
+      ? '"Right-Sizing": Modelle pro Use-Case benchmarken – kleinere 7–13B-Modelle sind oft 5–10× effizienter.'
+      : '"Right-Sizing": Benchmark models per use case – smaller 7–13B models are often 5–10× more efficient.',
     lang === 'de'
-      ? "Streaming verwenden – früh abbrechen spart Tokens."
-      : "Use streaming – early termination saves tokens.",
+      ? 'Streaming verwenden – früh abbrechen spart Tokens.'
+      : 'Use streaming – early termination saves tokens.',
     lang === 'de'
-      ? "System-/Few-Shot-Prompts stark verdichten; Beispiele auf das Minimum reduzieren."
-      : "Heavily compress system/few-shot prompts; reduce examples to minimum.",
+      ? 'System-/Few-Shot-Prompts stark verdichten; Beispiele auf das Minimum reduzieren.'
+      : 'Heavily compress system/few-shot prompts; reduce examples to minimum.',
     lang === 'de'
-      ? "Monitoring etablieren: Tokens, g CO₂/Anfrage sowie Cache-Ersparnisse kontinuierlich messen."
-      : "Establish monitoring: Continuously measure tokens, g CO₂/request, and cache savings."
+      ? 'Monitoring etablieren: Tokens, g CO₂/Anfrage sowie Cache-Ersparnisse kontinuierlich messen.'
+      : 'Establish monitoring: Continuously measure tokens, g CO₂/request, and cache savings.'
   ]);
 
   return `<!doctype html>
