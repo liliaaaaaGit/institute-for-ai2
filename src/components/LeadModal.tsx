@@ -165,15 +165,6 @@ export default function LeadModal({ sessionId, onClose }: Props) {
             </div>
           </div>
 
-          <div className="bg-brand-red/5 border border-brand-red/20 rounded-xl p-3">
-            <div className="flex items-start">
-              <Shield className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" stroke="#D52100" strokeWidth="2" />
-              <div className={`text-xs text-brand-ink`}>
-                <p className="font-medium text-brand-ink">{t('lead.doubleOptIn')}</p>
-                <p>{t('lead.doubleOptInDesc')}</p>
-              </div>
-            </div>
-          </div>
 
           <div className="flex gap-3">
             <button
