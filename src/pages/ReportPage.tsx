@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Calendar, Brain, BarChart3, Car, Monitor, Smartphone, ArrowLeft, Share2, Lightbulb, Home } from 'lucide-react'
 import { buildComparisons } from '../lib/comparisons'
 import { h1, h2, h3, body, container, section, card, buttonPrimary, buttonSecondary } from '../components/Ui'
-import { t, formatNumber, formatDate, formatDateShort } from '../i18n'
+import { t, formatNumber, formatDate, formatDateShort } from '../lib/i18n'
 
 const comparisonIcons = {
   'pc': Monitor,

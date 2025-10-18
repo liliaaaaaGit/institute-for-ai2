@@ -7,7 +7,7 @@ import { upsertLead, logLeadEvent } from '../lib/leads'
 import { sendReport } from '../lib/emailService'
 import { co2EmailHtml } from '../emails/Co2Report.html'
 import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
-import { t } from '../i18n'
+import { t } from '../lib/i18n'
 
 type ReportData = {
   sessionId?: string;
@@ -111,6 +111,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
               <Mail className="h-5 w-5" stroke="#D52100" strokeWidth="2.5" />
             </div>
             <h3 className={h3}>{t('lead.title')}</h3>
+            <h3 className={h3}>{t('lead.title')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -181,7 +182,7 @@ export default function LeadModal({ sessionId, onClose }: Props) {
               {sending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
-                  Senden…
+                  {t('lead.sending')}
                 </>
               ) : (
                 <>

@@ -4,7 +4,7 @@ import { CheckCircle, Download, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { h1, h2, body, container, section, card, buttonPrimary } from '../components/Ui'
-import { t } from '../i18n'
+import { t } from '../lib/i18n'
 
 export default function ConfirmPage() {
   const { token } = useParams<{ token: string }>()

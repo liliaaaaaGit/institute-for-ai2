@@ -1,9 +1,14 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { initializeLanguage } from './lib/i18n'
 import HomePage from './pages/HomePage'
 import ReportPage from './pages/ReportPage'
 import ThanksPage from './pages/ThanksPage'
 import ConfirmPage from './pages/ConfirmPage'
+import DebugPanel from './components/DebugPanel'
+
+// Initialize language on app start
+initializeLanguage();
 
 // Error boundary component
 class ErrorBoundary extends React.Component<
@@ -51,6 +56,11 @@ class ErrorBoundary extends React.Component<
 }
 
 export default function App() {
+  // Track used translation keys for debug panel
+  const usedKeys = [
+    'error.calculation', 'common.loading', 'common.error'
+  ];
+
   return (
     <ErrorBoundary>
       <Router>
@@ -61,6 +71,7 @@ export default function App() {
             <Route path="/thanks" element={<ThanksPage />} />
             <Route path="/confirm/:token" element={<ConfirmPage />} />
           </Routes>
+          <DebugPanel usedKeys={usedKeys} />
         </div>
       </Router>
     </ErrorBoundary>

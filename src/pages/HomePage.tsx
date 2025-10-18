@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Calculator, Brain, Mail, BarChart3, Monitor, Car, Lightbulb, Smartphone, Home } from 'lucide-react'
 import CalculatorForm from '../components/CalculatorForm'
 import ResultCard from '../components/ResultCard'
 import LeadModal from '../components/LeadModal'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 import { AIModel, ComparisonFactor } from '../types'
 import { buildComparisons } from '../lib/comparisons'
 import { supabase } from '../lib/supabase'
 import { h1, h2, body, bodyLarge, container, section, card } from '../components/Ui'
-import { t, formatNumber } from '../i18n'
+import { t, formatNumber, getCurrentLanguage, type Language } from '../lib/i18n'
 
 interface CalculationResult {
   sessionId: string
@@ -25,6 +26,13 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [language, setLanguage] = useState<Language>(getCurrentLanguage())
+
+  const handleLanguageChange = useCallback((newLang: Language) => {
+    setLanguage(newLang);
+    // Force re-render to update all translations
+    window.location.reload();
+  }, []);
 
   useEffect(() => {
     loadInitialData()
@@ -139,7 +147,7 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error('Error storing data:', error)
-      }
+        alert(t('error.calculation'))
       
       setResult(result)
     } catch (error) {
@@ -157,9 +165,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-2 md:px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="font-heading text-brand-red font-bold tracking-wide text-xs md:text-base">
-              INSTITUTE FOR ARTIFICIAL INTELLIGENCE
+              {language === 'de' ? 'INSTITUTE FOR ARTIFICIAL INTELLIGENCE' : 'INSTITUTE FOR ARTIFICIAL INTELLIGENCE'}
             </div>
-            <div className="flex items-center ml-4 md:ml-0">
+            <div className="flex items-center gap-4 ml-4 md:ml-0">
+              <LanguageSwitcher onLanguageChange={handleLanguageChange} />
               <img 
                 src="/Key Visual copy.jpg" 
                 alt="AI Logo" 
@@ -199,7 +208,7 @@ export default function HomePage() {
           <div className={`${card}`}>
             <div className="flex items-center mb-6">
               <Calculator className="h-6 w-6 mr-3" stroke="#D52100" strokeWidth="2.5" />
-              <h2 className={h2}>Emissionen berechnen</h2>
+              <h2 className={h2}>{t('form.calculate')}</h2>
             </div>
             
             <div className="max-w-2xl mx-auto">

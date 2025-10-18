@@ -1,3 +1,5 @@
+import { t, formatNumber } from './i18n';
+
 export type Comparison = {
   key: string;
   label: string;        // short label ("Desktop-PC", "Autofahrt", …)
@@ -14,8 +16,6 @@ export const factors = {
   led_kwh_per_h: 0.01
 } as const;
 
-const nf = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
-
 export function buildComparisons(co2: number): Comparison[] {
   // Clamp to avoid negative/NaN values
   co2 = Math.max(co2, 0);
@@ -28,36 +28,36 @@ export function buildComparisons(co2: number): Comparison[] {
   // 1) Desktop PC
   const pcHours = co2 / pc_g_per_h;
   const pcValue =
-    pcHours < 3 ? `${Math.round(pcHours * 60)} Minuten` : `${nf.format(pcHours)} Stunden`;
+    pcHours < 3 ? `${Math.round(pcHours * 60)} ${t('time.minutes')}` : `${formatNumber(pcHours)} ${t('time.hours')}`;
 
   // 2) Gasoline car
   const carKm = co2 / factors.car_g_per_km;
   const carValue =
-    carKm < 1 ? `${nf.format(carKm * 1000)} Meter` : `${nf.format(carKm)} Kilometer`;
+    carKm < 1 ? `${formatNumber(carKm * 1000)} ${t('unit.meters')}` : `${formatNumber(carKm)} ${t('unit.km')}`;
 
   // 3) Household electricity
   const hhHours = co2 / household_g_per_h;
   const hhValue =
-    hhHours < 2 ? `${Math.round(hhHours * 60)} Minuten` : `${nf.format(hhHours)} Stunden`;
+    hhHours < 2 ? `${Math.round(hhHours * 60)} ${t('time.minutes')}` : `${formatNumber(hhHours)} ${t('time.hours')}`;
 
   // 4) Smartphone charges
   const charges = co2 / phone_g_per_charge;
-  const chargesValue = `${Math.round(charges)} Aufladungen`;
+  const chargesValue = `${Math.round(charges)} ${t('unit.charges')}`;
 
   // 5) LED bulb (10 W)
   const ledHours = co2 / led_g_per_h;
   const ledDays = ledHours / 24;
   const ledValue =
-    ledHours < 24 ? `${nf.format(ledHours)} Stunden` : `${nf.format(ledDays)} Tage`;
+    ledHours < 24 ? `${formatNumber(ledHours)} ${t('time.hours')}` : `${formatNumber(ledDays)} ${t('time.days')}`;
 
   return [
-    { key: 'pc', label: 'Desktop-PC', value: pcValue },
-    { key: 'car', label: 'Autofahrt (Benzin)', value: carValue },
-    { key: 'household', label: 'Haushaltsstrom', value: hhValue },
-    { key: 'phone', label: 'Smartphone', value: chargesValue, detail: 'volle Aufladungen' },
-    { key: 'led', label: 'LED-Lampe (10 W)', value: ledValue }
+    { key: 'pc', label: t('comparison.pcUsage'), value: pcValue },
+    { key: 'car', label: t('comparison.carTravel'), value: carValue },
+    { key: 'household', label: t('comparison.electricity'), value: hhValue },
+    { key: 'phone', label: t('comparison.smartphoneCharge'), value: chargesValue, detail: t('unit.charges') },
+    { key: 'led', label: t('comparison.ledBulb'), value: ledValue }
   ];
 }
 
 // Tooltip text for assumptions
-export const assumptionsText = "Annahmen: 400 g CO₂/kWh; Desktop 150 W; Auto 150 g/km; Haushalt 0,4 kWh/h; LED 10 W; Smartphone 6 Wh.";
+export const assumptionsText = t('transparency.text');

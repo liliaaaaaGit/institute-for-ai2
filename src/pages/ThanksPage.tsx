@@ -1,7 +1,7 @@
 import { Mail, CheckCircle, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { h1, h2, body, container, section, card, buttonPrimary } from '../components/Ui'
-import { t } from '../i18n'
+import { t } from '../lib/i18n'
 
 export default function ThanksPage() {
   return (
@@ -19,7 +19,7 @@ export default function ThanksPage() {
           {t('thanks.title')}
         </h1>
         <p className={`${body} text-xl mb-8`}>
-          Ihr detaillierter CO₂-Bericht ist auf dem Weg zu Ihnen!
+          {t('thanks.subtitle')}
         </p>
 
         {/* Additional Info */}

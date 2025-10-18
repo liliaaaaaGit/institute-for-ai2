@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { HelpCircle, Zap } from 'lucide-react'
 import { AIModel } from '../types'
 import { body, buttonPrimary } from './Ui'
-import { t } from '../i18n'
+import { t } from '../lib/i18n'
 
 interface Props {
   models: AIModel[]
