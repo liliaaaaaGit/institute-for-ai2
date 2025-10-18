@@ -35,20 +35,25 @@ export default function HomePage() {
       setError(null)
       // Check if Supabase client is available
       if (!supabase) {
-        console.warn('Supabase not configured, using mock data')
+        console.warn('Supabase not configured, using mock data with correct emission factors')
         setModels(getMockModels())
         return
       }
       
       const modelsRes = await supabase.from('models').select('*').eq('is_active', true)
       
-      console.log('Models loaded:', modelsRes.data)
+      console.log('Models loaded from Supabase:', modelsRes.data)
+      console.log('Emission factors:', modelsRes.data?.map(m => `${m.name}: ${m.grams_per_1k_tokens}g`))
       
       if (modelsRes.data) setModels(modelsRes.data)
-      else setModels(getMockModels())
+      else {
+        console.log('No Supabase data, using mock models with correct emission factors')
+        setModels(getMockModels())
+      }
     } catch (error) {
       console.error('Error loading data:', error)
       setError(`Failed to load models: ${error}`)
+      console.log('Error fallback: using mock models with correct emission factors')
       setModels(getMockModels())
     }
   }
