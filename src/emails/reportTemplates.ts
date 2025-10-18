@@ -41,11 +41,11 @@ export const pill = (label: string) =>
 
 // Model-Guide-Daten (ohne Emojis)
 export const modelGuide = [
-  { name: "GPT-3.5", desc: "≈3 mg CO₂/Token – schnell, günstig", badge: "High" },
-  { name: "Claude Haiku", desc: "≈3 mg/Token – effizient für Routine", badge: "High" },
-  { name: "Llama 2/3 7–13B", desc: "≈3 mg/Token – flexibel/self-host", badge: "High" },
-  { name: "Claude Sonnet / Gemini Pro", desc: "≈7,5 mg/Token – ausgewogen", badge: "Medium" },
-  { name: "GPT-4 / Claude Opus", desc: "≈15 mg/Token – nur wenn nötig", badge: "Low" },
+  { name: "Mistral 7B", desc: "≈0,5 mg CO₂/Token – sehr effizient", badge: "High" },
+  { name: "GPT-3.5 / Claude Haiku", desc: "≈1 mg/Token – schnell, günstig", badge: "High" },
+  { name: "Gemini 1.5 Pro", desc: "≈2,5 mg/Token – gute Balance", badge: "High" },
+  { name: "GPT-4o / Claude Sonnet", desc: "≈3 mg/Token – ausgewogen", badge: "Medium" },
+  { name: "Mistral Large / GPT-4", desc: "≈4-5 mg/Token – nur wenn nötig", badge: "Low" },
 ];
 
 export const modelCards = () =>

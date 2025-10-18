@@ -30,13 +30,14 @@ export function generateEmailHTML(data: EmailReportData): string {
     : 'Direkte Token-Eingabe';
 
   const modelEfficiencyRows = [
-    { name: 'Mistral 7B', gPer1k: '4,0', bestFor: 'Einfache Texte, Zusammenfassungen' },
-    { name: 'Claude Haiku', gPer1k: '5,0', bestFor: 'Schnelle Antworten, Chat' },
-    { name: 'GPT-3.5', gPer1k: '7,0', bestFor: 'Allgemeine Aufgaben, Prototyping' },
-    { name: 'GPT-4o', gPer1k: '10,0', bestFor: 'Komplexe Analysen, Multimodal' },
-    { name: 'Gemini 1.5 Pro', gPer1k: '10,0', bestFor: 'Lange Kontexte, Recherche' },
-    { name: 'Claude Sonnet', gPer1k: '11,0', bestFor: 'Kreatives Schreiben, Code' },
-    { name: 'GPT-4', gPer1k: '12,0', bestFor: 'Höchste Qualität, kritische Aufgaben' }
+    { name: 'Mistral 7B', gPer1k: '0,5', bestFor: 'Einfache Texte, Zusammenfassungen' },
+    { name: 'Claude Haiku', gPer1k: '1,0', bestFor: 'Schnelle Antworten, Chat' },
+    { name: 'GPT-3.5', gPer1k: '1,0', bestFor: 'Allgemeine Aufgaben, Prototyping' },
+    { name: 'Gemini 1.5 Pro', gPer1k: '2,5', bestFor: 'Lange Kontexte, Recherche' },
+    { name: 'GPT-4o', gPer1k: '3,0', bestFor: 'Komplexe Analysen, Multimodal' },
+    { name: 'Claude Sonnet', gPer1k: '3,0', bestFor: 'Kreatives Schreiben, Code' },
+    { name: 'Mistral Large', gPer1k: '4,0', bestFor: 'Komplexe Aufgaben, Reasoning' },
+    { name: 'GPT-4', gPer1k: '5,0', bestFor: 'Höchste Qualität, kritische Aufgaben' }
   ];
 
   const effRows = modelEfficiencyRows.map(r => `
@@ -159,13 +160,14 @@ export function generateEmailText(data: EmailReportData): string {
     : 'Direkte Token-Eingabe';
 
   const modelEfficiencyRows = [
-    { name: 'Mistral 7B', gPer1k: '4,0', bestFor: 'Einfache Texte, Zusammenfassungen' },
-    { name: 'Claude Haiku', gPer1k: '5,0', bestFor: 'Schnelle Antworten, Chat' },
-    { name: 'GPT-3.5', gPer1k: '7,0', bestFor: 'Allgemeine Aufgaben, Prototyping' },
-    { name: 'GPT-4o', gPer1k: '10,0', bestFor: 'Komplexe Analysen, Multimodal' },
-    { name: 'Gemini 1.5 Pro', gPer1k: '10,0', bestFor: 'Lange Kontexte, Recherche' },
-    { name: 'Claude Sonnet', gPer1k: '11,0', bestFor: 'Kreatives Schreiben, Code' },
-    { name: 'GPT-4', gPer1k: '12,0', bestFor: 'Höchste Qualität, kritische Aufgaben' }
+    { name: 'Mistral 7B', gPer1k: '0,5', bestFor: 'Einfache Texte, Zusammenfassungen' },
+    { name: 'Claude Haiku', gPer1k: '1,0', bestFor: 'Schnelle Antworten, Chat' },
+    { name: 'GPT-3.5', gPer1k: '1,0', bestFor: 'Allgemeine Aufgaben, Prototyping' },
+    { name: 'Gemini 1.5 Pro', gPer1k: '2,5', bestFor: 'Lange Kontexte, Recherche' },
+    { name: 'GPT-4o', gPer1k: '3,0', bestFor: 'Komplexe Analysen, Multimodal' },
+    { name: 'Claude Sonnet', gPer1k: '3,0', bestFor: 'Kreatives Schreiben, Code' },
+    { name: 'Mistral Large', gPer1k: '4,0', bestFor: 'Komplexe Aufgaben, Reasoning' },
+    { name: 'GPT-4', gPer1k: '5,0', bestFor: 'Höchste Qualität, kritische Aufgaben' }
   ];
 
   // Find lighter model suggestion
