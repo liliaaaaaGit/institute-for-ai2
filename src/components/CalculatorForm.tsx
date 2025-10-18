@@ -157,7 +157,7 @@ export default function CalculatorForm({ models, onCalculate, isLoading }: Props
           <option value="">{t('form.selectModel')}</option>
           {models.map((model) => (
             <option key={model.id} value={model.id}>
-              {model.name} ({model.vendor}) - {model.grams_per_1k_tokens}g CO₂/1k tokens
+              {model.name} ({model.vendor})
             </option>
           ))}
         </select>
