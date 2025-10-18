@@ -158,6 +158,7 @@ export default function HomePage() {
       setIsLoading(false)
     }
   }
+  }
 
   return (
     <>
