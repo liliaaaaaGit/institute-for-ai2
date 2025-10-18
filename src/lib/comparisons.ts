@@ -28,33 +28,33 @@ export function buildComparisons(co2: number): Comparison[] {
   // 1) Desktop PC
   const pcHours = co2 / pc_g_per_h;
   const pcValue =
-    pcHours < 3 ? `${Math.round(pcHours * 60)} ${t('time.minutes')}` : `${formatNumber(pcHours)} ${t('time.hours')}`;
+    pcHours < 3 ? `${Math.round(pcHours * 60)} ${pcHours * 60 === 1 ? 'Minute' : 'Minuten'}` : `${formatNumber(pcHours)} ${pcHours === 1 ? 'Stunde' : 'Stunden'}`;
 
   // 2) Gasoline car
   const carKm = co2 / factors.car_g_per_km;
   const carValue =
-    carKm < 1 ? `${formatNumber(carKm * 1000)} ${t('unit.meters')}` : `${formatNumber(carKm)} ${t('unit.km')}`;
+    carKm < 1 ? `${formatNumber(carKm * 1000)} Meter` : `${formatNumber(carKm)} km`;
 
   // 3) Household electricity
   const hhHours = co2 / household_g_per_h;
   const hhValue =
-    hhHours < 2 ? `${Math.round(hhHours * 60)} ${t('time.minutes')}` : `${formatNumber(hhHours)} ${t('time.hours')}`;
+    hhHours < 2 ? `${Math.round(hhHours * 60)} ${hhHours * 60 === 1 ? 'Minute' : 'Minuten'}` : `${formatNumber(hhHours)} ${hhHours === 1 ? 'Stunde' : 'Stunden'}`;
 
   // 4) Smartphone charges
   const charges = co2 / phone_g_per_charge;
-  const chargesValue = `${Math.round(charges)} ${t('unit.charges')}`;
+  const chargesValue = `${Math.round(charges)} ${Math.round(charges) === 1 ? 'Aufladung' : 'Aufladungen'}`;
 
   // 5) LED bulb (10 W)
   const ledHours = co2 / led_g_per_h;
   const ledDays = ledHours / 24;
   const ledValue =
-    ledHours < 24 ? `${formatNumber(ledHours)} ${t('time.hours')}` : `${formatNumber(ledDays)} ${t('time.days')}`;
+    ledHours < 24 ? `${formatNumber(ledHours)} ${ledHours === 1 ? 'Stunde' : 'Stunden'}` : `${formatNumber(ledDays)} ${ledDays === 1 ? 'Tag' : 'Tage'}`;
 
   return [
     { key: 'pc', label: t('comparison.pcUsage'), value: pcValue },
     { key: 'car', label: t('comparison.carTravel'), value: carValue },
     { key: 'household', label: t('comparison.electricity'), value: hhValue },
-    { key: 'phone', label: t('comparison.smartphoneCharge'), value: chargesValue, detail: t('unit.charges') },
+    { key: 'phone', label: t('comparison.smartphoneCharge'), value: chargesValue },
     { key: 'led', label: t('comparison.ledBulb'), value: ledValue }
   ];
 }
