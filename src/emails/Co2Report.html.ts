@@ -78,13 +78,6 @@ export function co2EmailHtml(input?: Co2Props): string {
           <td align="center" style="padding:0">
             <table role="presentation" width="100%" style="max-width:600px;border-collapse:collapse;background:${brand.bg}">
               
-              <!-- Header-Band -->
-              <tr>
-                <td style="background:${brand.red};padding:16px 24px;color:#fff;font:600 18px/1 ${brand.font}">
-                  Institute for AI
-                </td>
-              </tr>
-
               <!-- Titelblock -->
               <tr>
                 <td style="padding:32px 24px 8px 24px;background:${brand.bg}">
