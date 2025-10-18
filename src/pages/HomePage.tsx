@@ -148,6 +148,7 @@ export default function HomePage() {
       } catch (error) {
         console.error('Error storing data:', error)
         alert(t('error.calculation'))
+      }
       
       setResult(result)
     } catch (error) {
