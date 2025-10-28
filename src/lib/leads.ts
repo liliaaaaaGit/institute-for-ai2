@@ -12,12 +12,11 @@ console.log('[SUPA ENV]', {
  * Idempotent lead write
  * - exactly one row per email in public.leads
  * - handled on the server (/api/leads) to use the service role & pass RLS
- * - no client-side SELECT to avoid 406
- * - uses onConflict=email + ignoreDuplicates (server) to avoid 409
+ * - uses onConflict=email on the server to avoid 409
  */
 export async function upsertLead(
   email: string,
-  consentChecked: boolean,
+  consentMarketing: boolean,              // ← checkbox 2 (newsletter)
   meta?: Record<string, any>
 ) {
   const r = await fetch('/api/leads', {
@@ -25,9 +24,9 @@ export async function upsertLead(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: email.trim().toLowerCase(),
-      consent_marketing: !!consentChecked, // must be true or RLS blocks
+      consent_marketing: !!consentMarketing,        // ← store exactly what the user chose
       consent_policy_version: 'v1',
-      meta: meta ?? null,
+      meta: { ...(meta ?? {}), newsletter: !!consentMarketing }, // helpful for audits
     }),
   })
 
@@ -58,7 +57,7 @@ export async function logLeadEvent(params: {
     body: JSON.stringify({
       email: params.email.trim().toLowerCase(),
       // we don’t force UUID here; server can accept text/null
-      session_id: undefined, // omit; your DB column is uuid, keep it null unless you send a real uuid
+      session_id: undefined, // keep null unless you send a real uuid
       model: params.model,
       tokens: params.tokens,
       co2_grams: params.co2_grams,
