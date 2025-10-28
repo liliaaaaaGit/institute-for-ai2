@@ -52,12 +52,13 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       const reportData: ReportData = JSON.parse(storedData)
       
-      // ✅ just call the idempotent writer; let it throw only on real errors
-      await upsertLead(email, consentRequired, {
+      // ✅ idempotent writer; now using consentMarketing (checkbox 2)
+      await upsertLead(email, consentMarketing, {
         source: 'app',
         model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
         tokens: reportData?.tokens,
-        co2Grams: reportData?.co2Grams
+        co2Grams: reportData?.co2Grams,
+        newsletter: consentMarketing      // helpful for debugging/audits
       })
 
       // Log this specific send event
@@ -164,7 +165,6 @@ export default function LeadModal({ sessionId, onClose }: Props) {
               </label>
             </div>
           </div>
-
 
           <div className="flex gap-3">
             <button
