@@ -1,5 +1,21 @@
 import { t, formatNumber } from './i18n';
 
+// Helper function to format duration in minutes with seconds precision
+function formatDurationInMinutes(minutes: number): string {
+  if (minutes >= 1) {
+    // Round to nearest whole minute for values >= 1 minute
+    const roundedMinutes = Math.round(minutes);
+    return `${roundedMinutes} ${roundedMinutes === 1 ? 'Minute' : 'Minuten'}`;
+  } else if (minutes > 0) {
+    // Convert to seconds for values < 1 minute
+    const seconds = Math.round(minutes * 60);
+    return `${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'}`;
+  } else {
+    // Handle zero or negative values
+    return '0 Sekunden';
+  }
+}
+
 export type Comparison = {
   key: string;
   label: string;        // short label ("Desktop-PC", "Autofahrt", …)
@@ -27,8 +43,9 @@ export function buildComparisons(co2: number): Comparison[] {
 
   // 1) Desktop PC
   const pcHours = co2 / pc_g_per_h;
-  const pcValue =
-    pcHours < 3 ? `${Math.round(pcHours * 60)} ${pcHours * 60 === 1 ? 'Minute' : 'Minuten'}` : `${formatNumber(pcHours)} ${pcHours === 1 ? 'Stunde' : 'Stunden'}`;
+  const pcValue = pcHours < 3 
+    ? formatDurationInMinutes(pcHours * 60)
+    : `${formatNumber(pcHours)} ${pcHours === 1 ? 'Stunde' : 'Stunden'}`;
 
   // 2) Gasoline car
   const carKm = co2 / factors.car_g_per_km;
@@ -37,8 +54,9 @@ export function buildComparisons(co2: number): Comparison[] {
 
   // 3) Household electricity
   const hhHours = co2 / household_g_per_h;
-  const hhValue =
-    hhHours < 2 ? `${Math.round(hhHours * 60)} ${hhHours * 60 === 1 ? 'Minute' : 'Minuten'}` : `${formatNumber(hhHours)} ${hhHours === 1 ? 'Stunde' : 'Stunden'}`;
+  const hhValue = hhHours < 2 
+    ? formatDurationInMinutes(hhHours * 60)
+    : `${formatNumber(hhHours)} ${hhHours === 1 ? 'Stunde' : 'Stunden'}`;
 
   // 4) Smartphone charges
   const charges = co2 / phone_g_per_charge;
@@ -47,8 +65,11 @@ export function buildComparisons(co2: number): Comparison[] {
   // 5) LED bulb (10 W)
   const ledHours = co2 / led_g_per_h;
   const ledDays = ledHours / 24;
-  const ledValue =
-    ledHours < 24 ? `${formatNumber(ledHours)} ${ledHours === 1 ? 'Stunde' : 'Stunden'}` : `${formatNumber(ledDays)} ${ledDays === 1 ? 'Tag' : 'Tage'}`;
+  const ledValue = ledHours < 1
+    ? formatDurationInMinutes(ledHours * 60)
+    : ledHours < 24 
+      ? `${formatNumber(ledHours)} ${ledHours === 1 ? 'Stunde' : 'Stunden'}` 
+      : `${formatNumber(ledDays)} ${ledDays === 1 ? 'Tag' : 'Tage'}`;
 
   return [
     { key: 'pc', label: t('comparison.pcUsage'), value: pcValue },
