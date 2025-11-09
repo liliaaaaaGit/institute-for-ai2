@@ -21,11 +21,12 @@ type ReportData = {
 
 interface Props {
   sessionId: string
+  formData?: any  // Add form data as prop
   onClose: () => void
   onReportConfirmed?: () => void
 }
 
-export default function LeadModal({ sessionId, onClose, onReportConfirmed }: Props) {
+export default function LeadModal({ sessionId, formData, onClose, onReportConfirmed }: Props) {
   const [email, setEmail] = useState('')
   const [consentMarketing, setConsentMarketing] = useState(false)
   const [consentRequired, setConsentRequired] = useState(false)
@@ -43,15 +44,36 @@ export default function LeadModal({ sessionId, onClose, onReportConfirmed }: Pro
       console.debug('Submit lead', { email, consentRequired })
       console.log('🎯 Attempting to send email to:', email)
       
-      // Get stored report data
-      const storageKey = `report_${sessionId}`
-      const storedData = localStorage.getItem(storageKey)
-      
-      if (!storedData) {
-        throw new Error('Report data not found')
+      // Success - call the confirmation callback first to generate report data
+      if (onReportConfirmed) {
+        // This will trigger the calculation and create the report data
+        onReportConfirmed()
+        
+        // Wait a bit for the calculation to complete and data to be stored
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
       
-      const reportData: ReportData = JSON.parse(storedData)
+      // Now get the stored report data (should exist after onReportConfirmed)
+      const storageKey = `report_${sessionId}`
+      let storedData = localStorage.getItem(storageKey)
+      
+      // If still no data, try to construct it from formData
+      let reportData: ReportData
+      if (storedData) {
+        reportData = JSON.parse(storedData)
+      } else if (formData) {
+        // Fallback: construct basic report data from form data
+        reportData = {
+          sessionId,
+          co2Grams: 0, // Will be updated after calculation
+          tokens: formData.inputMode === 'tokens' ? formData.tokens : Math.ceil((formData.prompt ?? '').length / 4),
+          originalPrompt: formData.inputMode === 'prompt' ? formData.prompt : undefined,
+          model: 'Unknown Model',
+          comparisons: []
+        }
+      } else {
+        throw new Error('No report data available')
+      }
       
       // ✅ idempotent writer; now using consentMarketing (checkbox 2)
       await upsertLead(email, consentMarketing, {
@@ -86,14 +108,9 @@ export default function LeadModal({ sessionId, onClose, onReportConfirmed }: Pro
       })
       
       await sendReport(email, subject, html)
-      
-      // Success - call the confirmation callback if provided
-      if (onReportConfirmed) {
-        onReportConfirmed()
-      } else {
-        // Fallback to old behavior (navigate to thanks page)
-        navigate('/thanks')
-      }
+
+      // Navigate to thanks page or stay on current page
+      navigate('/thanks')
     } catch (e: any) {
       const msg = String(e?.message || '')
       if (msg.includes('Test mode') || msg.includes('verify a domain')) {
