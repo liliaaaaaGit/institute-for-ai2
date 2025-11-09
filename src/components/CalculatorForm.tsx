@@ -177,7 +177,7 @@ export default function CalculatorForm({ models, onCalculate, isLoading }: Props
         ) : (
           <>
             <Zap className="h-4 w-4 mr-2" stroke="currentColor" strokeWidth="2.5" />
-            {t('form.calculate')}
+            {t('form.calculateAndGetReport')}
           </>
         )}
       </button>

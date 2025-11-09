@@ -25,6 +25,7 @@ export default function HomePage() {
   const [result, setResult] = useState<CalculationResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showLeadModal, setShowLeadModal] = useState(false)
+  const [hasReportAccess, setHasReportAccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [language, setLanguage] = useState<Language>(getCurrentLanguage())
 
@@ -79,14 +80,12 @@ export default function HomePage() {
     ]
   }
 
-  async function handleCalculation(data: {
+  async function performCalculation(data: {
     inputMode: 'prompt' | 'tokens'
     prompt?: string
     tokens?: number
     modelId: string
   }) {
-    setIsLoading(true)
-    
     try {
       const model = models.find(m => m.id === data.modelId)
       if (!model) {
@@ -154,6 +153,36 @@ export default function HomePage() {
     } catch (error) {
       console.error('Error:', error)
       alert(t('error.calculation'))
+    }
+  }
+
+  function handleCalculationButtonClick(data: {
+    inputMode: 'prompt' | 'tokens'
+    prompt?: string
+    tokens?: number
+    modelId: string
+  }) {
+    // Store form data for later use
+    setCurrentFormData(data)
+    // Open modal instead of calculating directly
+    setShowLeadModal(true)
+  }
+
+  const [currentFormData, setCurrentFormData] = useState<any>(null)
+
+  async function handleReportConfirmed() {
+    if (!currentFormData) return
+    
+    setIsLoading(true)
+    try {
+      // Perform the calculation with stored form data
+      await performCalculation(currentFormData)
+      // Grant access to view results
+      setHasReportAccess(true)
+      // Close modal
+      setShowLeadModal(false)
+    } catch (error) {
+      console.error('Error in calculation after report confirmation:', error)
     } finally {
       setIsLoading(false)
     }
@@ -215,7 +244,7 @@ export default function HomePage() {
             <div className="max-w-2xl mx-auto">
               <CalculatorForm
                 models={models}
-                onCalculate={handleCalculation}
+                onCalculate={handleCalculationButtonClick}
                 isLoading={isLoading}
               />
             </div>
@@ -223,13 +252,10 @@ export default function HomePage() {
         </div>
 
         {/* Results Section */}
-        {result && (
+        {result && hasReportAccess && (
           <div className="mb-12">
             <div className={`${card}`}>
-              <ResultCard 
-                result={result}
-                onGetReport={() => setShowLeadModal(true)}
-              />
+              <ResultCard result={result} />
             </div>
           </div>
         )}
@@ -275,10 +301,11 @@ export default function HomePage() {
         </div>
 
         {/* Lead Modal */}
-        {showLeadModal && result && (
+        {showLeadModal && (
           <LeadModal 
-            sessionId={result.sessionId}
+            sessionId={currentFormData ? `calc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}` : ''}
             onClose={() => setShowLeadModal(false)}
+            onReportConfirmed={handleReportConfirmed}
           />
         )}
       </div>

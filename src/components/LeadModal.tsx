@@ -22,9 +22,10 @@ type ReportData = {
 interface Props {
   sessionId: string
   onClose: () => void
+  onReportConfirmed?: () => void
 }
 
-export default function LeadModal({ sessionId, onClose }: Props) {
+export default function LeadModal({ sessionId, onClose, onReportConfirmed }: Props) {
   const [email, setEmail] = useState('')
   const [consentMarketing, setConsentMarketing] = useState(false)
   const [consentRequired, setConsentRequired] = useState(false)
@@ -86,8 +87,13 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       
       await sendReport(email, subject, html)
       
-      // Success - navigate to thanks page
-      navigate('/thanks')
+      // Success - call the confirmation callback if provided
+      if (onReportConfirmed) {
+        onReportConfirmed()
+      } else {
+        // Fallback to old behavior (navigate to thanks page)
+        navigate('/thanks')
+      }
     } catch (e: any) {
       const msg = String(e?.message || '')
       if (msg.includes('Test mode') || msg.includes('verify a domain')) {

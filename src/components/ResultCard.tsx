@@ -30,10 +30,9 @@ const comparisonIcons = {
   'car': Car,
   'led': Lightbulb,
   'phone': Smartphone,
-  'household': Home,
 }
 
-export default function ResultCard({ result, onGetReport }: Props) {
+export default function ResultCard({ result }: Props) {
   const [showAllComparisons, setShowAllComparisons] = useState(false)
   const [showAssumptions, setShowAssumptions] = useState(false)
   
@@ -114,21 +113,6 @@ export default function ResultCard({ result, onGetReport }: Props) {
             {showAllComparisons ? t('result.showLess') : t('result.showMore', { count: comparisons.length - 3 })}
           </button>
         )}
-      </div>
-
-
-      {/* CTA */}
-      <div className="border-t pt-6">
-        <button
-          onClick={onGetReport}
-          className={`${buttonPrimary} w-full justify-center`}
-        >
-          <Download className="h-4 w-4 mr-2" stroke="currentColor" strokeWidth="2.5" />
-          {t('cta.getReport')}
-        </button>
-        <p className={`text-xs text-brand-ink/60 text-center mt-2`}>
-          {t('cta.getReportDesc')}
-        </p>
       </div>
     </div>
   )
