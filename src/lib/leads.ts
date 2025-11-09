@@ -1,13 +1,6 @@
 // src/lib/leads.ts
 import { supabase } from './supabase'
 
-// ——— TEMP DEBUG: remove once verified in prod ———
-console.log('[SUPA ENV]', {
-  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-  VITE_SUPABASE_ANON_KEY_HEAD: import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 12),
-  VERCEL_ENV: import.meta.env.VERCEL_ENV,
-})
-
 /**
  * Idempotent lead write
  * - exactly one row per email in public.leads
@@ -30,10 +23,15 @@ export async function upsertLead(
     }),
   })
 
+  console.log('Lead API response status:', r.status);
+  
   if (!r.ok) {
     const j = await r.json().catch(() => ({}))
+    console.error('Lead API error:', j);
     throw new Error(j?.error || `Lead upsert failed (${r.status})`)
   }
+  
+  console.log('Lead upserted successfully');
   return true
 }
 
