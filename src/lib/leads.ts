@@ -16,7 +16,7 @@ export async function upsertLead(payload: LeadPayload) {
       email: payload.email,
       consent_marketing: payload.consent_marketing || false,
       consent_policy_version: payload.consent_policy_version || 'v1',
-      session_id: payload.sessionId,
+      sessionId: payload.sessionId, // Keep consistent with server expectation
       meta: payload.meta,
     }),
   });

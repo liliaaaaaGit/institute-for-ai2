@@ -1,6 +1,6 @@
-// api/leads.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers for development
@@ -18,9 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Validate environment variables
-    const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+    // Validate environment variables - check both possible names
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    console.log('Supabase URL source', {
+      SUPABASE_URL: !!process.env.SUPABASE_URL,
+      VITE_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
+      SERVICE_KEY: !!SUPABASE_SERVICE_ROLE_KEY
+    });
     
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing Supabase env vars', { 
@@ -42,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Use consistent key naming - match what client sends
     const { email, consent_marketing, consent_policy_version, meta, sessionId } = body;
 
     // Validate required fields
@@ -57,8 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const leadData: any = {
       email: email.trim().toLowerCase(),
       consent_marketing: Boolean(consent_marketing),
-      consent_policy_version: consent_policy_version || 'v1',
-      created_at: new Date().toISOString()
+      consent_policy_version: consent_policy_version || 'v1'
     };
 
     // If sessionId is provided and valid, try to find the session
@@ -81,8 +87,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Generate confirmation token for email verification
-    leadData.confirmation_token = require('crypto').randomBytes(32).toString('hex');
+    // Generate confirmation token for email verification using proper crypto import
+    leadData.confirmation_token = randomBytes(32).toString('hex');
+
+    console.log('Attempting to upsert lead with data:', {
+      email: leadData.email,
+      has_session_id: !!leadData.session_id,
+      has_token: !!leadData.confirmation_token
+    });
 
     // Upsert lead into database
     const { data, error } = await supabase
@@ -102,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    console.log('Lead upserted successfully:', { email, sessionId });
+    console.log('Lead upserted successfully:', { email: leadData.email, sessionId });
     return res.status(200).json({ ok: true, data });
 
   } catch (error) {
