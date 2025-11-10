@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+function AppWrapper() {
   React.useEffect(() => {
     async function loadModels() {
       try {
@@ -22,6 +23,7 @@ import './index.css'
           return
         }
 
+        return (
           {loading ? (
             <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500">
               Loading models...
@@ -33,6 +35,7 @@ import './index.css'
               onChange={(e) => setModelId(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
+              disabled={loading || !modelId}
             >
               <option value="">Select a model...</option>
               {models.map((model) => (
@@ -42,12 +45,26 @@ import './index.css'
               ))}
             </select>
           )}
+        )
+      } catch (error) {
+        console.error('Failed to load models:', error)
+      }
+    }
     loadModels()
   }, [])
-  } catch (error) {
-    console.error('Failed to render app:', error)
+  
+  return <App />
+}
+
+try {
+  const rootElement = document.getElementById('root')
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(<AppWrapper />)
+} catch (error) {
+  console.error('Failed to render app:', error)
+  const rootElement = document.getElementById('root')
+  if (rootElement) {
     rootElement.innerHTML = `
-          disabled={loading || !modelId}
       <div style="padding: 20px; font-family: Arial, sans-serif; background: #fee; border: 1px solid #f00;">
         <h1>Render Error</h1>
         <p>Failed to render the React application.</p>
