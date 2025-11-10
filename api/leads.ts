@@ -1,88 +1,110 @@
-import { createClient } from '@supabase/supabase-js'
+// api/leads.ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   if (req.method === 'OPTIONS') {
-    return res.status(200).end()
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     // Validate environment variables
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing environment variables:', {
         hasUrl: !!SUPABASE_URL,
-        hasServiceRole: !!SERVICE_ROLE
-      })
+        hasServiceRole: !!SUPABASE_SERVICE_ROLE_KEY
+      });
       return res.status(500).json({ 
         error: 'Server configuration error',
-        details: 'Missing required environment variables'
-      })
+        message: 'Missing required environment variables',
+        details: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured'
+      });
     }
 
     // Parse and validate request body
-    let body
+    let body;
     try {
-      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     } catch (parseError) {
-      console.error('JSON parse error:', parseError)
-      return res.status(400).json({ error: 'Invalid JSON in request body' })
+      console.error('JSON parse error:', parseError);
+      return res.status(400).json({ 
+        error: 'Invalid JSON',
+        message: 'Request body must be valid JSON'
+      });
     }
 
-    const { email, consentMarketing, sessionId, consentPolicyVersion } = body
+    const { email, consent_marketing, consent_policy_version, meta, sessionId } = body;
 
     // Validate required fields
     if (!email || typeof email !== 'string' || !email.trim()) {
-      return res.status(400).json({ error: 'Email is required' })
-    }
-
-    if (!sessionId || typeof sessionId !== 'string') {
-      return res.status(400).json({ error: 'Session ID is required' })
+      return res.status(400).json({ 
+        error: 'Validation error',
+        message: 'Email is required and must be a non-empty string'
+      });
     }
 
     // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Insert lead into database
-    const { data, error } = await supabase
-      .from('leads')
-      .upsert({
-        email: email.trim().toLowerCase(),
-        consent_marketing: Boolean(consentMarketing),
-        consent_policy_version: consentPolicyVersion || '1.0',
-        session_id: sessionId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'email'
-      })
+    // Prepare lead data - only use columns that exist in the leads table
+    const leadData = {
+      email: email.trim().toLowerCase(),
+      consent_marketing: Boolean(consent_marketing),
+      consent_policy_version: consent_policy_version || '1.0',
+      created_at: new Date().toISOString()
+    };
 
-    if (error) {
-      console.error('Supabase leads error:', error)
-      return res.status(500).json({ 
-        error: 'Database error', 
-        details: error.message 
-      })
+    // If sessionId is provided and valid, try to find the session
+    if (sessionId && typeof sessionId === 'string') {
+      const { data: session } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('public_slug', sessionId)
+        .single();
+      
+      if (session) {
+        leadData.session_id = session.id;
+      }
     }
 
-    console.log('Lead upserted successfully:', { email, sessionId })
-    return res.status(200).json({ ok: true, data })
+    // Upsert lead into database
+    const { data, error } = await supabase
+      .from('leads')
+      .upsert(leadData, {
+        onConflict: 'email'
+      })
+      .select();
+
+    if (error) {
+      console.error('Supabase leads error:', error);
+      return res.status(500).json({ 
+        error: 'Supabase error',
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+    }
+
+    console.log('Lead upserted successfully:', { email, sessionId });
+    return res.status(200).json({ ok: true, data });
 
   } catch (error) {
-    console.error('Handler error:', error)
+    console.error('Handler error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
-      details: error.message
-    })
+      message: error.message || 'An unexpected error occurred'
+    });
   }
 }
