@@ -1,90 +1,138 @@
-import React, { useState } from 'react';
-import { X, Mail, Shield, CheckCircle } from 'lucide-react';
-import { upsertLead } from '../lib/leads';
+'use client'
 
-interface LeadModalProps {
-  sessionId: string;
-  formData: any;
-  onClose: () => void;
-  onReportConfirmed: () => void;
+import { useState } from 'react'
+import { X, Mail, Shield, FileText } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { upsertLead, logLeadEvent } from '../lib/leads'
+import { sendReport } from '../lib/emailService'
+import { co2EmailHtml } from '../emails/Co2Report.html'
+import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
+import { t } from '../lib/i18n'
+
+type ReportData = {
+  sessionId?: string;
+  publicSlug?: string;
+  co2Grams: number;
+  tokens?: number;
+  originalPrompt?: string;
+  model: { name: string } | string;
+  comparisons?: Array<{ label: string; value: string }>;
+};
+
+interface Props {
+  sessionId: string
+  onClose: () => void
 }
 
-export default function LeadModal({ sessionId, formData, onClose, onReportConfirmed }: LeadModalProps) {
-  const [email, setEmail] = useState('');
-  const [consentReport, setConsentReport] = useState(false);
-  const [consentMarketing, setConsentMarketing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function LeadModal({ sessionId, onClose }: Props) {
+  const [email, setEmail] = useState('')
+  const [consentMarketing, setConsentMarketing] = useState(false)
+  const [consentRequired, setConsentRequired] = useState(false)
+  const [sending, setSending] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     
-    if (!email.trim()) {
-      setError('Email is required');
-      return;
-    }
+    if (!email || !consentRequired) return
     
-    if (!consentReport) {
-      setError('You must consent to receive the CO₂ report');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
+    setSending(true)
+    
     try {
-      await upsertLead({
-        email: email.trim(),
-        sessionId,
-        consent_marketing: consentMarketing,
-        consent_policy_version: '1.0',
-        meta: {
-          formData,
-          timestamp: new Date().toISOString()
-        }
-      });
+      console.debug('Submit lead', { email, consentRequired })
+      console.log('🎯 Attempting to send email to:', email)
+      
+      // Get stored report data
+      const storageKey = `report_${sessionId}`
+      const storedData = localStorage.getItem(storageKey)
+      
+      if (!storedData) {
+        throw new Error('Report data not found')
+      }
+      
+      const reportData: ReportData = JSON.parse(storedData)
+      
+      // ✅ idempotent writer; now using consentMarketing (checkbox 2)
+      await upsertLead(email, consentMarketing, {
+        source: 'app',
+        model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
+        tokens: reportData?.tokens,
+        co2Grams: reportData?.co2Grams,
+        newsletter: consentMarketing      // helpful for debugging/audits
+      })
 
-      onReportConfirmed();
-    } catch (err) {
-      console.error('Lead upsert failed:', err);
-      setError('Failed to submit. Please try again.');
+      // Log this specific send event
+      await logLeadEvent({
+        email,
+        sessionId: reportData?.sessionId,
+        model: typeof reportData?.model === 'string' ? reportData.model : reportData?.model?.name,
+        tokens: reportData?.tokens,
+        co2_grams: reportData?.co2Grams,
+        public_slug: reportData?.publicSlug,
+        meta: reportData
+      })
+
+      // Build email HTML + send
+      const subject = `Ihr CO₂-Bericht – ${
+        typeof reportData?.model === 'string' ? reportData.model : (reportData?.model?.name ?? 'AI Model')
+      }`
+      const html = co2EmailHtml({
+        resultGrams: reportData.co2Grams,
+        model: typeof reportData.model === 'string' ? reportData.model : reportData.model.name,
+        tokens: reportData.tokens,
+        prompt: reportData.originalPrompt,
+        comparisons: reportData.comparisons ?? [],
+      })
+      
+      await sendReport(email, subject, html)
+      
+      // Success - navigate to thanks page
+      navigate('/thanks')
+    } catch (e: any) {
+      const msg = String(e?.message || '')
+      if (msg.includes('Test mode') || msg.includes('verify a domain')) {
+        alert('Test-Modus aktiv: E-Mails werden nur an die Entwickler-Adresse gesendet.')
+      } else if (msg.includes('Email')) {
+        alert('E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen.')
+      } else {
+        alert('Fehler beim Speichern oder E-Mail-Versand. Bitte versuchen Sie es erneut.')
+      }
+      console.error(e)
     } finally {
-      setIsSubmitting(false);
+      setSending(false)
     }
-  };
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="mb-6">
-          <div className="flex items-center mb-2">
-            <Mail className="w-6 h-6 text-green-600 mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900">Get Your CO₂ Report</h2>
+    <div className="fixed inset-0 bg-brand-ink bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-brand-white rounded-2xl max-w-md w-full p-6 shadow-card">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <div className="bg-brand-red/10 p-2 rounded-xl mr-3">
+              <Mail className="h-5 w-5" stroke="#D52100" strokeWidth="2.5" />
+            </div>
+            <h3 className={h3}>{t('lead.title')}</h3>
+            <h3 className={h3}>{t('lead.title')}</h3>
           </div>
-          <p className="text-gray-600">
-            Enter your email to receive your personalized CO₂ footprint analysis.
-          </p>
+          <button
+            onClick={onClose}
+            className="text-brand-ink/40 hover:text-brand-ink/60 focus:outline-none focus:shadow-focus rounded-lg p-1"
+          >
+            <X className="h-5 w-5" stroke="currentColor" strokeWidth="2" />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
+            <label className={`block text-sm font-medium text-brand-ink mb-2`}>
+              {t('lead.email')}
             </label>
             <input
               type="email"
-              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="your@email.com"
+              placeholder={t('lead.emailPlaceholder')}
+              className="input-field"
               required
             />
           </div>
@@ -93,64 +141,53 @@ export default function LeadModal({ sessionId, formData, onClose, onReportConfir
             <div className="flex items-start">
               <input
                 type="checkbox"
-                id="consentReport"
-                checked={consentReport}
-                onChange={(e) => setConsentReport(e.target.checked)}
-                className="mt-1 mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                id="consent-required"
+                checked={consentRequired}
+                onChange={(e) => setConsentRequired(e.target.checked)}
+                className="mt-1 rounded border-brand-ink/30 text-brand-red focus:ring-brand-red focus:ring-2"
                 required
               />
-              <label htmlFor="consentReport" className="text-sm text-gray-700">
-                <span className="font-medium">Required:</span> I consent to receive my CO₂ footprint report via email.
+              <label htmlFor="consent-required" className={`ml-3 text-sm text-brand-ink/90`}>
+                {t('lead.consentRequired')}
               </label>
             </div>
 
             <div className="flex items-start">
               <input
                 type="checkbox"
-                id="consentMarketing"
+                id="consent-marketing"
                 checked={consentMarketing}
                 onChange={(e) => setConsentMarketing(e.target.checked)}
-                className="mt-1 mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                className="mt-1 rounded border-brand-ink/30 text-brand-red focus:ring-brand-red focus:ring-2"
               />
-              <label htmlFor="consentMarketing" className="text-sm text-gray-700">
-                <span className="font-medium">Optional:</span> I would like to receive tips and updates about sustainability.
+              <label htmlFor="consent-marketing" className={`ml-3 text-sm text-brand-ink/90`}>
+                {t('lead.consentMarketing')}
               </label>
             </div>
           </div>
 
-          <div className="flex items-center text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
-            <Shield className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span>
-              Your data is protected and will only be used to send your report. 
-              You can unsubscribe at any time.
-            </span>
-          </div>
-
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className={`${buttonSecondary} flex-1 justify-center`}
             >
-              Cancel
+              {t('lead.cancel')}
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !consentReport}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              disabled={sending || !email || !consentRequired}
+              className={`${buttonPrimary} flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              {sending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+                  {t('lead.sending')}
+                </>
               ) : (
                 <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Send Report
+                  <FileText className="h-4 w-4 mr-2" stroke="currentColor" strokeWidth="2.5" />
+                  {t('lead.getReport')}
                 </>
               )}
             </button>
@@ -158,5 +195,5 @@ export default function LeadModal({ sessionId, formData, onClose, onReportConfir
         </form>
       </div>
     </div>
-  );
+  )
 }

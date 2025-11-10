@@ -25,10 +25,8 @@ export default function HomePage() {
   const [result, setResult] = useState<CalculationResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showLeadModal, setShowLeadModal] = useState(false)
-  const [hasReportAccess, setHasReportAccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [language, setLanguage] = useState<Language>(getCurrentLanguage())
-  const [currentFormData, setCurrentFormData] = useState<any>(null)
 
   const handleLanguageChange = useCallback((newLang: Language) => {
     setLanguage(newLang);
@@ -81,187 +79,81 @@ export default function HomePage() {
     ]
   }
 
-  async function performCalculation(data: {
+  async function handleCalculation(data: {
     inputMode: 'prompt' | 'tokens'
     prompt?: string
     tokens?: number
     modelId: string
   }) {
-    try {
-      const model = models.find(m => m.id === data.modelId)
-      if (!model) {
-        console.error('Model not found')
-        alert('Please select a valid AI model')
-        return
-      }
-
-      const tokensEst = data.inputMode === 'tokens' 
-        ? Number(data.tokens) 
-        : Math.ceil((data.prompt ?? '').length / 4)
-      
-      const gramsPerToken = model.grams_per_1k_tokens / 1000
-      const co2 = parseFloat((tokensEst * gramsPerToken).toFixed(1))
-
-      // Generate a simple session ID
-      const sessionId = `calc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-      console.log('Generated session ID:', sessionId)
-
-      // Get comparisons using new logic
-      const comparisons = buildComparisons(co2)
-
-      const result: CalculationResult = {
-        sessionId,
-        publicSlug: sessionId,
-        co2Grams: co2,
-        tokens: tokensEst,
-        model
-      }
-
-      // Store report data in localStorage with detailed logging
-      const reportData = {
-        ...result,
-        comparisons,
-        timestamp: new Date().toISOString(),
-        inputMode: data.inputMode,
-        originalPrompt: data.inputMode === 'prompt' ? data.prompt : undefined,
-        calculationDetails: {
-          emissionFactor: model.grams_per_1k_tokens,
-          tokenEstimationMethod: data.inputMode === 'prompt' ? 'Estimated from text length (~4 chars per token)' : 'User provided',
-          calculationFormula: `${tokensEst} tokens × ${gramsPerToken.toFixed(4)}g CO₂/token = ${co2}g CO₂`
-        }
-      }
-      
-      const storageKey = `report_${sessionId}`
-      console.log('Storing data with key:', storageKey)
-      console.log('Data to store:', reportData)
-      
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(reportData))
-        console.log('Data stored successfully')
-        
-        // Verify storage
-        const storedData = localStorage.getItem(storageKey)
-        console.log('Verification - stored data exists:', !!storedData)
-        if (storedData) {
-          console.log('Verification - can parse stored data:', !!JSON.parse(storedData))
-        }
-      } catch (error) {
-        console.error('Error storing data:', error)
-        alert(t('error.calculation'))
-      }
-      
-      setResult(result)
-    } catch (error) {
-      console.error('Error:', error)
-      alert(t('error.calculation'))
-    }
-  }
-
-  async function performCalculation(data: {
-    inputMode: 'prompt' | 'tokens'
-    prompt?: string
-    tokens?: number
-    modelId: string
-  }) {
-    try {
-      const model = models.find(m => m.id === data.modelId)
-      if (!model) {
-        console.error('Model not found')
-        alert('Please select a valid AI model')
-        return
-      }
-
-      const tokensEst = data.inputMode === 'tokens' 
-        ? Number(data.tokens) 
-        : Math.ceil((data.prompt ?? '').length / 4)
-      
-      const gramsPerToken = model.grams_per_1k_tokens / 1000
-      const co2 = parseFloat((tokensEst * gramsPerToken).toFixed(1))
-
-      // Generate a simple session ID
-      const sessionId = `calc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-      console.log('Generated session ID:', sessionId)
-
-      // Get comparisons using new logic
-      const comparisons = buildComparisons(co2)
-
-      const result: CalculationResult = {
-        sessionId,
-        publicSlug: sessionId,
-        co2Grams: co2,
-        tokens: tokensEst,
-        model
-      }
-
-      // Store report data in localStorage with detailed logging
-      const reportData = {
-        ...result,
-        comparisons,
-        timestamp: new Date().toISOString(),
-        inputMode: data.inputMode,
-        originalPrompt: data.inputMode === 'prompt' ? data.prompt : undefined,
-        calculationDetails: {
-          emissionFactor: model.grams_per_1k_tokens,
-          tokenEstimationMethod: data.inputMode === 'prompt' ? 'Estimated from text length (~4 chars per token)' : 'User provided',
-          calculationFormula: `${tokensEst} tokens × ${gramsPerToken.toFixed(4)}g CO₂/token = ${co2}g CO₂`
-        }
-      }
-      
-      const storageKey = `report_${sessionId}`
-      console.log('Storing data with key:', storageKey)
-      console.log('Data to store:', reportData)
-      
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(reportData))
-        console.log('Data stored successfully')
-        
-        // Verify storage
-        const storedData = localStorage.getItem(storageKey)
-        console.log('Verification - stored data exists:', !!storedData)
-        if (storedData) {
-          console.log('Verification - can parse stored data:', !!JSON.parse(storedData))
-        }
-      } catch (error) {
-        console.error('Error storing data:', error)
-        alert(t('error.calculation'))
-      }
-      
-      setResult(result)
-      return sessionId // Return the sessionId for the modal
-    } catch (error) {
-      console.error('Error:', error)
-      alert(t('error.calculation'))
-      return null
-    }
-  }
-
-  function handleCalculationButtonClick(data: {
-    inputMode: 'prompt' | 'tokens'
-    prompt?: string
-    tokens?: number
-    modelId: string
-  }) {
-    // Store form data for later use
-    setCurrentFormData(data)
-    // Open modal instead of calculating directly
-    setShowLeadModal(true)
-  }
-
-  async function handleReportConfirmed() {
-    if (!currentFormData) return
-    
     setIsLoading(true)
+    
     try {
-      // Perform the calculation with stored form data
-      const sessionId = await performCalculation(currentFormData)
-      if (sessionId) {
-        // Grant access to view results
-        setHasReportAccess(true)
-        // Close modal
-        setShowLeadModal(false)
+      const model = models.find(m => m.id === data.modelId)
+      if (!model) {
+        console.error('Model not found')
+        alert('Please select a valid AI model')
+        return
       }
+
+      const tokensEst = data.inputMode === 'tokens' 
+        ? Number(data.tokens) 
+        : Math.ceil((data.prompt ?? '').length / 4)
+      
+      const gramsPerToken = model.grams_per_1k_tokens / 1000
+      const co2 = parseFloat((tokensEst * gramsPerToken).toFixed(1))
+
+      // Generate a simple session ID
+      const sessionId = `calc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+      console.log('Generated session ID:', sessionId)
+
+      // Get comparisons using new logic
+      const comparisons = buildComparisons(co2)
+
+      const result: CalculationResult = {
+        sessionId,
+        publicSlug: sessionId,
+        co2Grams: co2,
+        tokens: tokensEst,
+        model
+      }
+
+      // Store report data in localStorage with detailed logging
+      const reportData = {
+        ...result,
+        comparisons,
+        timestamp: new Date().toISOString(),
+        inputMode: data.inputMode,
+        originalPrompt: data.inputMode === 'prompt' ? data.prompt : undefined,
+        calculationDetails: {
+          emissionFactor: model.grams_per_1k_tokens,
+          tokenEstimationMethod: data.inputMode === 'prompt' ? 'Estimated from text length (~4 chars per token)' : 'User provided',
+          calculationFormula: `${tokensEst} tokens × ${gramsPerToken.toFixed(4)}g CO₂/token = ${co2}g CO₂`
+        }
+      }
+      
+      const storageKey = `report_${sessionId}`
+      console.log('Storing data with key:', storageKey)
+      console.log('Data to store:', reportData)
+      
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(reportData))
+        console.log('Data stored successfully')
+        
+        // Verify storage
+        const storedData = localStorage.getItem(storageKey)
+        console.log('Verification - stored data exists:', !!storedData)
+        if (storedData) {
+          console.log('Verification - can parse stored data:', !!JSON.parse(storedData))
+        }
+      } catch (error) {
+        console.error('Error storing data:', error)
+        alert(t('error.calculation'))
+      }
+      
+      setResult(result)
     } catch (error) {
-      console.error('Error in calculation after report confirmation:', error)
+      console.error('Error:', error)
+      alert(t('error.calculation'))
     } finally {
       setIsLoading(false)
     }
@@ -323,7 +215,7 @@ export default function HomePage() {
             <div className="max-w-2xl mx-auto">
               <CalculatorForm
                 models={models}
-                onCalculate={handleCalculationButtonClick}
+                onCalculate={handleCalculation}
                 isLoading={isLoading}
               />
             </div>
@@ -331,10 +223,13 @@ export default function HomePage() {
         </div>
 
         {/* Results Section */}
-        {result && hasReportAccess && (
+        {result && (
           <div className="mb-12">
             <div className={`${card}`}>
-              <ResultCard result={result} />
+              <ResultCard 
+                result={result}
+                onGetReport={() => setShowLeadModal(true)}
+              />
             </div>
           </div>
         )}
@@ -380,12 +275,10 @@ export default function HomePage() {
         </div>
 
         {/* Lead Modal */}
-        {showLeadModal && (
+        {showLeadModal && result && (
           <LeadModal 
-            sessionId={result?.sessionId || `calc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`}
-            formData={currentFormData}
+            sessionId={result.sessionId}
             onClose={() => setShowLeadModal(false)}
-            onReportConfirmed={handleReportConfirmed}
           />
         )}
       </div>
