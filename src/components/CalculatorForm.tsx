@@ -1,207 +1,186 @@
-import React, { useState, useEffect } from 'react'
-import { Calculator } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { HelpCircle, Zap } from 'lucide-react'
+import { AIModel } from '../types'
+import { body, buttonPrimary } from './Ui'
 import { t } from '../lib/i18n'
 
-interface Model {
-  id: string
-  name: string
-  vendor: string
-  grams_per_1k_tokens: number
-  is_active: boolean
+interface Props {
+  models: AIModel[]
+  onCalculate: (data: any) => void
+  isLoading: boolean
 }
 
-interface CalculatorFormProps {
-  onSubmit: (formData: {
-    inputMode: 'prompt' | 'tokens'
-    prompt?: string
-    tokens?: string
-    modelId: string
-  }) => void
-}
-
-export default function CalculatorForm({ onSubmit }: CalculatorFormProps) {
+export default function CalculatorForm({ models, onCalculate, isLoading }: Props) {
   const [inputMode, setInputMode] = useState<'prompt' | 'tokens'>('prompt')
   const [prompt, setPrompt] = useState('')
   const [tokens, setTokens] = useState('')
-  const [modelId, setModelId] = useState('')
-  const [models, setModels] = useState<Model[]>([])
-  const [loading, setLoading] = useState(true)
+  const [selectedModel, setSelectedModel] = useState('')
+  const [showTokenInfo, setShowTokenInfo] = useState(false)
 
+  // Set the first model as default when models are loaded
   useEffect(() => {
-    async function loadModels() {
-      try {
-        if (!supabase) {
-          console.error('Supabase client not initialized')
-          setLoading(false)
-          return
-        }
-
-        const { data, error } = await supabase
-          .from('models')
-          .select('*')
-          .eq('is_active', true)
-          .order('name')
-
-        if (error) {
-          console.error('Error loading models:', error)
-          setLoading(false)
-          return
-        }
-
-        if (data && data.length > 0) {
-          setModels(data)
-          setModelId(data[0].id) // Set first model as default
-        }
-        setLoading(false)
-      } catch (error) {
-        console.error('Failed to load models:', error)
-        setLoading(false)
-      }
+    if (models.length > 0 && !selectedModel) {
+      setSelectedModel(models[0].id)
     }
-    loadModels()
-  }, [])
+  }, [models, selectedModel])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!modelId) {
-      alert('Please select a model')
+    // Double-check that the selected model exists in the current models array
+    const modelExists = models.find(model => model.id === selectedModel)
+    if (!selectedModel || !modelExists) {
+      console.error('Invalid model selected:', selectedModel)
       return
     }
-
-    if (inputMode === 'prompt' && !prompt.trim()) {
-      alert('Please enter a prompt')
-      return
-    }
-
-    if (inputMode === 'tokens' && (!tokens || parseInt(tokens) <= 0)) {
-      alert('Please enter a valid number of tokens')
-      return
-    }
-
-    onSubmit({
+    
+    const data = {
       inputMode,
-      prompt: inputMode === 'prompt' ? prompt : undefined,
-      tokens: inputMode === 'tokens' ? tokens : undefined,
-      modelId
-    })
+      modelId: selectedModel,
+      ...(inputMode === 'prompt' ? { prompt } : { tokens: parseInt(tokens) })
+    }
+    
+    onCalculate(data)
   }
 
+  const isValid = selectedModel && models.find(model => model.id === selectedModel) && (
+    (inputMode === 'prompt' && prompt.trim()) ||
+    (inputMode === 'tokens' && tokens && parseInt(tokens) > 0)
+  )
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-brand-red/10 p-2 rounded-xl">
-          <Calculator className="h-5 w-5" stroke="#D52100" strokeWidth="2.5" />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Input Mode Toggle */}
+      <div>
+        <label className={`block text-sm font-medium text-brand-ink mb-3`}>
+          {t('form.inputMethod')}
+        </label>
+        <div className="flex bg-brand-ink/5 rounded-xl p-1">
+          <button
+            type="button"
+            onClick={() => setInputMode('prompt')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              inputMode === 'prompt'
+                ? 'bg-brand-white text-brand-red shadow-sm'
+                : 'text-brand-ink/60 hover:text-brand-ink'
+            }`}
+          >
+            {t('form.pastePrompt')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setInputMode('tokens')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              inputMode === 'tokens'
+                ? 'bg-brand-white text-brand-red shadow-sm'
+                : 'text-brand-ink/60 hover:text-brand-ink'
+            }`}
+          >
+            {t('form.enterTokens')}
+          </button>
         </div>
-        <h2 className="text-xl font-heading font-semibold text-brand-ink">
-          {t('calculator.title')}
-        </h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Input Mode Toggle */}
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-3">
-            {t('calculator.inputMode')}
-          </label>
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setInputMode('prompt')}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                inputMode === 'prompt'
-                  ? 'bg-white text-brand-ink shadow-sm'
-                  : 'text-brand-ink/60 hover:text-brand-ink'
-              }`}
-            >
-              {t('calculator.byPrompt')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputMode('tokens')}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                inputMode === 'tokens'
-                  ? 'bg-white text-brand-ink shadow-sm'
-                  : 'text-brand-ink/60 hover:text-brand-ink'
-              }`}
-            >
-              {t('calculator.byTokens')}
-            </button>
-          </div>
-        </div>
-
-        {/* Input Field */}
+      {/* Input Field */}
+      <div>
         {inputMode === 'prompt' ? (
           <div>
-            <label htmlFor="prompt" className="block text-sm font-medium text-brand-ink mb-2">
-              {t('calculator.prompt')}
+            <label className={`block text-sm font-medium text-brand-ink mb-2`}>
+              {t('form.aiPrompt')}
             </label>
             <textarea
-              id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={t('calculator.promptPlaceholder')}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              rows={4}
+              placeholder={t('form.placeholderPrompt')}
+              className="input-field h-32 resize-none"
               required
             />
+            {prompt && (
+              <p className={`text-xs text-brand-ink/60 mt-1`}>
+                {t('form.tokensEstimated', { count: Math.ceil(prompt.length / 4) })}
+              </p>
+            )}
           </div>
         ) : (
           <div>
-            <label htmlFor="tokens" className="block text-sm font-medium text-brand-ink mb-2">
-              {t('calculator.tokens')}
-            </label>
+            <div className="flex items-center mb-2">
+              <label className={`block text-sm font-medium text-brand-ink`}>
+                {t('form.tokenCount')}
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowTokenInfo(!showTokenInfo)}
+                className="ml-2 text-brand-ink/40 hover:text-brand-ink/60"
+              >
+                <HelpCircle className="h-4 w-4" stroke="#D52100" strokeWidth="2" />
+              </button>
+            </div>
+            
+            {showTokenInfo && (
+              <div className="bg-brand-red/5 border border-brand-red/20 rounded-xl p-3 mb-3 text-sm text-brand-ink">
+                <p className="font-medium mb-1 text-brand-ink">{t('tokens.whatAre')}</p>
+                <p>{t('tokens.explanation')}</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>{t('tokens.ratio1')}</li>
+                  <li>{t('tokens.ratio2')}</li>
+                  <li>{t('tokens.ratio3')}</li>
+                </ul>
+              </div>
+            )}
+            
             <input
               type="number"
-              id="tokens"
               value={tokens}
               onChange={(e) => setTokens(e.target.value)}
-              placeholder="1000"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={t('form.placeholderTokens')}
+              className="input-field"
               min="1"
               required
             />
           </div>
         )}
+      </div>
 
-        {/* Model Selection */}
-        <div>
-          <label htmlFor="model" className="block text-sm font-medium text-brand-ink mb-2">
-            {t('calculator.model')}
-          </label>
-          {loading ? (
-            <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500">
-              Loading models...
-            </div>
-          ) : (
-            <select
-              id="model"
-              value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-              disabled={loading || models.length === 0}
-            >
-              <option value="">Select a model...</option>
-              {models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name} ({model.vendor}) - {model.grams_per_1k_tokens}g CO₂/1k tokens
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading || models.length === 0}
-          className="w-full bg-brand-red text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-red/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      {/* Model Selection */}
+      <div>
+        <label className={`block text-sm font-medium text-brand-ink mb-2`}>
+          {t('form.aiModel')}
+        </label>
+        <select
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          className="input-field"
+          required
         >
-          {t('calculator.calculate')}
-        </button>
-      </form>
-    </div>
+          <option value="">{t('form.selectModel')}</option>
+          {models.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.name} ({model.vendor})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Calculate Button */}
+      <button
+        type="submit"
+        disabled={!isValid || isLoading}
+        className={`${buttonPrimary} w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
+      >
+        {isLoading ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+            {t('form.calculating')}
+          </>
+        ) : (
+          <>
+            <Zap className="h-4 w-4 mr-2" stroke="currentColor" strokeWidth="2.5" />
+            {t('form.calculate')}
+          </>
+        )}
+      </button>
+    </form>
   )
 }
