@@ -1,71 +1,35 @@
-// src/lib/leads.ts
-import { supabase } from './supabase'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-/**
- * Idempotent lead write
- * - exactly one row per email in public.leads
- * - handled on the server (/api/leads) to use the service role & pass RLS
- * - uses onConflict=email on the server to avoid 409
- */
-export async function upsertLead(
-  email: string,
-  consentMarketing: boolean,              // ← checkbox 2 (newsletter)
-  meta?: Record<string, any>
-) {
-  const r = await fetch('/api/leads', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: email.trim().toLowerCase(),
-      consent_marketing: !!consentMarketing,        // ← store exactly what the user chose
-      consent_policy_version: 'v1',
-      meta: { ...(meta ?? {}), newsletter: !!consentMarketing }, // helpful for audits
-    }),
-  })
-
-  console.log('Lead API response status:', r.status);
-  
-  if (!r.ok) {
-    const j = await r.json().catch(() => ({}))
-    console.error('Lead API error:', j);
-    throw new Error(j?.error || `Lead upsert failed (${r.status})`)
+  } catch (error) {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        consent_marketing: !!consentMarketing,        // ← store exactly what the user chose
+        consent_policy_version: 'v1',
+        meta: { ...(meta ?? {}), newsletter: !!consentMarketing }, // helpful for audits
+      }),
+    });
+  } catch (fetchError) {
+    console.error('Network error during lead upsert:', fetchError);
+    throw new Error(`Network error: ${fetchError}`);
   }
-  
-  console.log('Lead upserted successfully');
-  return true
-}
-
-/**
- * Event logging into public.lead_events.
- * NOTE: DB column session_id is UUID. If we have a non-UUID (e.g. "calc_..."),
- * we store it in meta.session_key instead and omit session_id.
- */
-export async function logLeadEvent(params: {
-  email: string
-  sessionId?: string
-  model?: string
-  tokens?: number
-  co2_grams?: number
-  public_slug?: string
-  meta?: Record<string, any>
-}) {
-  const r = await fetch('/api/log-event', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: params.email.trim().toLowerCase(),
-      // we don’t force UUID here; server can accept text/null
-      session_id: undefined, // keep null unless you send a real uuid
-      model: params.model,
-      tokens: params.tokens,
-      co2_grams: params.co2_grams,
-      public_slug: params.public_slug,
-      meta: { ...(params.meta ?? {}), session_key: params.sessionId }, // store non-UUID session in meta
-    }),
-  })
-  if (!r.ok) {
-    const j = await r.json().catch(() => ({}))
-    throw new Error(j?.error || `logLeadEvent failed (${r.status})`)
+    console.error('Failed to render app:', error)
+    rootElement.innerHTML = `
+      <div style="padding: 20px; font-family: Arial, sans-serif; background: #fee; border: 1px solid #f00;">
+        <h1>Render Error</h1>
+        <p>Failed to render the React application.</p>
+        <pre>${error}</pre>
+    let j: any = {};
+    try {
+      j = await r.json();
+    } catch (parseError) {
+      console.error('Failed to parse error response:', parseError);
+      j = { error: `HTTP ${r.status} ${r.statusText}` };
+    }
+      </div>
+    throw new Error(j?.error || j?.message || `Lead upsert failed (${r.status})`)
   }
-  return true
 }
