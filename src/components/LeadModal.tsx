@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Mail, Shield, FileText } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { X, Mail, FileText } from 'lucide-react'
 import { upsertLead, logLeadEvent } from '../lib/leads'
 import { sendReport } from '../lib/emailService'
 import { co2EmailHtml } from '../emails/Co2Report.html'
-import { h3, body, buttonPrimary, buttonSecondary } from './Ui'
+import { h3, buttonPrimary, buttonSecondary } from './Ui'
 import { t } from '../lib/i18n'
 
 type ReportData = {
@@ -22,14 +21,14 @@ type ReportData = {
 interface Props {
   sessionId: string
   onClose: () => void
+  onSuccess?: (report: ReportData) => void
 }
 
-export default function LeadModal({ sessionId, onClose }: Props) {
+export default function LeadModal({ sessionId, onClose, onSuccess }: Props) {
   const [email, setEmail] = useState('')
   const [consentMarketing, setConsentMarketing] = useState(false)
   const [consentRequired, setConsentRequired] = useState(false)
   const [sending, setSending] = useState(false)
-  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -85,9 +84,8 @@ export default function LeadModal({ sessionId, onClose }: Props) {
       })
       
       await sendReport(email, subject, html)
-      
-      // Success - navigate to thanks page
-      navigate('/thanks')
+
+      onSuccess?.(reportData)
     } catch (e: any) {
       const msg = String(e?.message || '')
       if (msg.includes('Test mode') || msg.includes('verify a domain')) {
@@ -111,7 +109,6 @@ export default function LeadModal({ sessionId, onClose }: Props) {
             <div className="bg-brand-red/10 p-2 rounded-xl mr-3">
               <Mail className="h-5 w-5" stroke="#D52100" strokeWidth="2.5" />
             </div>
-            <h3 className={h3}>{t('lead.title')}</h3>
             <h3 className={h3}>{t('lead.title')}</h3>
           </div>
           <button

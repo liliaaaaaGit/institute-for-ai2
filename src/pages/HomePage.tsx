@@ -25,6 +25,7 @@ export default function HomePage() {
   const [result, setResult] = useState<CalculationResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showLeadModal, setShowLeadModal] = useState(false)
+  const [pendingResult, setPendingResult] = useState<CalculationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [language, setLanguage] = useState<Language>(getCurrentLanguage())
 
@@ -85,6 +86,10 @@ export default function HomePage() {
     tokens?: number
     modelId: string
   }) {
+    setResult(null)
+    setError(null)
+    setShowLeadModal(false)
+    setPendingResult(null)
     setIsLoading(true)
     
     try {
@@ -135,9 +140,11 @@ export default function HomePage() {
       console.log('Storing data with key:', storageKey)
       console.log('Data to store:', reportData)
       
+      let storageSucceeded = false
       try {
         localStorage.setItem(storageKey, JSON.stringify(reportData))
         console.log('Data stored successfully')
+        storageSucceeded = true
         
         // Verify storage
         const storedData = localStorage.getItem(storageKey)
@@ -148,9 +155,13 @@ export default function HomePage() {
       } catch (error) {
         console.error('Error storing data:', error)
         alert(t('error.calculation'))
+        return
       }
       
-      setResult(result)
+      if (!storageSucceeded) return
+      
+      setPendingResult(result)
+      setShowLeadModal(true)
     } catch (error) {
       console.error('Error:', error)
       alert(t('error.calculation'))
@@ -228,7 +239,6 @@ export default function HomePage() {
             <div className={`${card}`}>
               <ResultCard 
                 result={result}
-                onGetReport={() => setShowLeadModal(true)}
               />
             </div>
           </div>
@@ -275,10 +285,21 @@ export default function HomePage() {
         </div>
 
         {/* Lead Modal */}
-        {showLeadModal && result && (
+        {showLeadModal && pendingResult && (
           <LeadModal 
-            sessionId={result.sessionId}
-            onClose={() => setShowLeadModal(false)}
+            sessionId={pendingResult.sessionId}
+            onClose={() => {
+              setShowLeadModal(false)
+              localStorage.removeItem(`report_${pendingResult.sessionId}`)
+              setPendingResult(null)
+            }}
+            onSuccess={() => {
+              if (pendingResult) {
+                setResult(pendingResult)
+              }
+              setShowLeadModal(false)
+              setPendingResult(null)
+            }}
           />
         )}
       </div>

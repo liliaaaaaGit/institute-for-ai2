@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Car, Monitor, Smartphone, ExternalLink, Download, Lightbulb, Home, Info } from 'lucide-react'
+import { Car, Monitor, Smartphone, Lightbulb, Home, Info } from 'lucide-react'
 import { buildComparisons, assumptionsText } from '../lib/comparisons'
-import { h3, body, buttonPrimary, card } from './Ui'
+import { h3 } from './Ui'
 import { t, formatNumber } from '../lib/i18n'
 
 interface CalculationResult {
@@ -22,7 +22,6 @@ interface CalculationResult {
 
 interface Props {
   result: CalculationResult
-  onGetReport: () => void
 }
 
 const comparisonIcons = {
@@ -33,7 +32,7 @@ const comparisonIcons = {
   'household': Home,
 }
 
-export default function ResultCard({ result, onGetReport }: Props) {
+export default function ResultCard({ result }: Props) {
   const [showAllComparisons, setShowAllComparisons] = useState(false)
   const [showAssumptions, setShowAssumptions] = useState(false)
   
@@ -116,20 +115,6 @@ export default function ResultCard({ result, onGetReport }: Props) {
         )}
       </div>
 
-
-      {/* CTA */}
-      <div className="border-t pt-6">
-        <button
-          onClick={onGetReport}
-          className={`${buttonPrimary} w-full justify-center`}
-        >
-          <Download className="h-4 w-4 mr-2" stroke="currentColor" strokeWidth="2.5" />
-          {t('cta.getReport')}
-        </button>
-        <p className={`text-xs text-brand-ink/60 text-center mt-2`}>
-          {t('cta.getReportDesc')}
-        </p>
-      </div>
     </div>
   )
 }
