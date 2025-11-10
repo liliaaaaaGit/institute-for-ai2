@@ -10,5 +10,7 @@ if (!rootElement) {
   document.body.innerHTML = `
         <p>Failed to render the React application.</p>
     `
-  }
+} else {
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(<App />)
 }
